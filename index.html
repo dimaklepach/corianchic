@@ -670,7 +670,7 @@ function tryUrlThumb(f){
     const url=driveThumbUrl(f.id);
     const im=new Image();
     const t=setTimeout(()=>{ im.onload=im.onerror=null; res(""); }, 2200);
-    im.onload=()=>{ clearTimeout(t); res(url); };
+    im.onload=()=>{ clearTimeout(t); res((im.naturalWidth||0)>=40?url:""); };
     im.onerror=()=>{ clearTimeout(t); res(""); };
     im.referrerPolicy="no-referrer";
     im.src=url;
@@ -678,10 +678,12 @@ function tryUrlThumb(f){
 }
 async function fillThumbs(files){
   const list=(files||[]).filter(f=>f&&f.id&&isShowFile(f)&&!f.thumb);
-  await Promise.all(list.map(async f=>{
-    const u=await tryUrlThumb(f);
-    if(u) applyThumb(f,u);
-  }));
+  if(!isIos()){
+    await Promise.all(list.map(async f=>{
+      const u=await tryUrlThumb(f);
+      if(u) applyThumb(f,u);
+    }));
+  }
   const rest=list.filter(f=>!f.thumb);
   let i=0;
   async function worker(){
@@ -2475,7 +2477,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1651`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1653`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
