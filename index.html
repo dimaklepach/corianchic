@@ -4,6 +4,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="CORIANCHIC"/>
+<meta name="application-name" content="CORIANCHIC"/>
+<meta name="theme-color" content="#1b7a4e"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+<link rel="manifest" href="manifest.webmanifest"/>
 <title>CORIANCHIC</title>
 <link href="https:&#47;&#47;fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2468,7 +2475,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1650`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1651`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
