@@ -770,18 +770,11 @@ function drivePreview(f){
   return f&&(f.view||f.url)||"";
 }
 async function photoSrc(f){
-  if(f&&f.thumb&&String(f.thumb).indexOf("data:")===0) return f.thumb;
+  if(f&&f.thumb) return f.thumb;
   if(f&&f.id){
     try{
-      const t=await runGS("apiFileThumb",{fileId:f.id},25000);
+      const t=await runGS("apiFileThumb",{fileId:f.id},20000);
       if(t&&t.ok&&t.thumb){ f.thumb=t.thumb; return t.thumb; }
-    }catch(e){}
-    try{
-      const d=await runGS("apiGetFile",{fileId:f.id},60000);
-      if(d&&d.ok&&d.data){
-        const src="data:"+(d.mime||"image/jpeg")+";base64,"+d.data;
-        f.thumb=src; return src;
-      }
     }catch(e){}
   }
   return f&&f.thumb?f.thumb:"";
@@ -799,32 +792,53 @@ function openLightbox(files, i){
     const p=box.querySelector(".lb-prev"); if(p) p.onclick=e=>{e.stopPropagation(); step(-1);};
     const nx=box.querySelector(".lb-next"); if(nx) nx.onclick=e=>{e.stopPropagation(); step(1);};
   };
-  const makeSlide=async(f, fromPct)=>{
+  const fillMedia=(sl,f)=>{
+    sl.innerHTML="";
+    if(f.thumb){
+      const img=document.createElement("img");
+      img.alt="";
+      img.src=f.thumb;
+      sl.appendChild(img);
+      return;
+    }
+    if(f.id){
+      const fr=document.createElement("iframe");
+      fr.src=drivePreview(f);
+      fr.allow="autoplay";
+      sl.appendChild(fr);
+    }
+    photoSrc(f).then(src=>{
+      if(!src||!sl.parentNode) return;
+      f.thumb=src;
+      sl.innerHTML="";
+      const img=document.createElement("img");
+      img.alt="";
+      img.src=src;
+      sl.appendChild(img);
+    });
+  };
+  const makeSlide=(f, fromPct)=>{
     const sl=document.createElement("div");
     sl.className="lb-slide";
     sl.style.transform="translateX("+fromPct+"%)";
-    const img=document.createElement("img");
-    img.alt="";
-    img.src=f.thumb||"";
-    sl.appendChild(img);
+    fillMedia(sl,f);
     const stage=box.querySelector(".lb-stage");
     if(stage) stage.appendChild(sl);
-    const src=await photoSrc(f);
-    if(src) img.src=src;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ sl.style.transform="translateX(0)"; }));
     return sl;
   };
-  const step=async dir=>{
+  const step=dir=>{
     if(moving||list.length<2) return;
     moving=true;
     n=(n+dir+list.length)%list.length;
-    const stage=box.querySelector(".lb-stage");
     const old=[...box.querySelectorAll(".lb-slide")];
     old.forEach(sl=>{ sl.style.transform="translateX("+(-dir*100)+"%)"; });
-    await makeSlide(list[n], dir*100);
+    makeSlide(list[n], dir*100);
+    const nxt=list[(n+dir+list.length)%list.length];
+    if(nxt&&!nxt.thumb) photoSrc(nxt);
     setTimeout(()=>{ old.forEach(sl=>sl.remove()); moving=false; }, 340);
   };
-  const draw=async()=>{
+  const draw=()=>{
     const f=list[n];
     box.className="on";
     box.innerHTML=`<button class="lb-x" type="button">×</button>
@@ -832,7 +846,10 @@ function openLightbox(files, i){
       <button class="lb-nav lb-next" type="button">›</button>
       <div class="lb-stage"></div>`;
     bindNav();
-    await makeSlide(f, 0);
+    makeSlide(f, 0);
+    const a=list[(n+1)%list.length], b=list[(n-1+list.length)%list.length];
+    if(a&&!a.thumb) photoSrc(a);
+    if(b&&!b.thumb) photoSrc(b);
   };
   box.onclick=e=>{ if(e.target===box || (e.target.classList&&e.target.classList.contains("lb-stage"))) close(); };
   box.ontouchstart=e=>{ x0=e.changedTouches[0].clientX; };
@@ -2572,7 +2589,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1658`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1659`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
