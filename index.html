@@ -400,6 +400,17 @@ function gsBridgeFrame(){
     document.body.appendChild(f);
   });
 }
+function fetchJsonp(url, ms){
+  return new Promise((res,rej)=>{
+    const cb="cc"+Date.now()+Math.random().toString(36).slice(2,8);
+    const t=setTimeout(()=>{ try{delete window[cb];}catch(e){} try{s.remove();}catch(e){} rej(new Error("jsonp-timeout")); }, ms||25000);
+    const s=document.createElement("script");
+    window[cb]=function(data){ clearTimeout(t); try{delete window[cb];}catch(e){} try{s.remove();}catch(e){} res(data); };
+    s.onerror=()=>{ clearTimeout(t); try{delete window[cb];}catch(e){} try{s.remove();}catch(e){} rej(new Error("jsonp")); };
+    s.src=url+(url.indexOf("?")>=0?"&":"?")+"callback="+cb;
+    document.head.appendChild(s);
+  });
+}
 function runGS(name, arg, ms){
   return new Promise((res,rej)=>{
     if(typeof google!=="undefined" && google.script && google.script.run){
@@ -409,23 +420,11 @@ function runGS(name, arg, ms){
       catch(err){ clearTimeout(t); rej(err); }
       return;
     }
+    const q=API+"?action="+encodeURIComponent(name)+"&payload="+encodeURIComponent(JSON.stringify(arg||{}));
     if(/github\.io$/i.test(location.hostname||"")){
-      gsBridgeFrame().then(f=>{
-        const id="b"+Date.now()+Math.random().toString(36).slice(2);
-        const t=setTimeout(()=>rej(new Error("gs-timeout")), ms||20000);
-        const on=ev=>{
-          if(!ev.data||ev.data.id!==id) return;
-          window.removeEventListener("message",on);
-          clearTimeout(t);
-          if(ev.data.ok) res(ev.data.v);
-          else rej(new Error(ev.data.error||"bridge"));
-        };
-        window.addEventListener("message",on);
-        f.contentWindow.postMessage({id,name,arg},"*");
-      }).catch(rej);
+      fetchJsonp(q, ms||25000).then(res).catch(rej);
       return;
     }
-    const q=API+"?action="+encodeURIComponent(name)+"&payload="+encodeURIComponent(JSON.stringify(arg||{}));
     fetchTo(q, ms||20000).then(res).catch(rej);
   });
 }
@@ -2573,7 +2572,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1657`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1658`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
