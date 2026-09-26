@@ -794,27 +794,30 @@ function openLightbox(files, i){
   };
   const fillMedia=(sl,f)=>{
     sl.innerHTML="";
-    if(f.thumb){
-      const img=document.createElement("img");
-      img.alt="";
-      img.src=f.thumb;
-      sl.appendChild(img);
-      return;
-    }
-    if(f.id){
-      const fr=document.createElement("iframe");
-      fr.src=drivePreview(f);
-      fr.allow="autoplay";
-      sl.appendChild(fr);
-    }
-    photoSrc(f).then(src=>{
-      if(!src||!sl.parentNode) return;
-      f.thumb=src;
+    const showImg=src=>{
       sl.innerHTML="";
       const img=document.createElement("img");
       img.alt="";
       img.src=src;
       sl.appendChild(img);
+    };
+    if(f.thumb&&String(f.thumb).indexOf("data:")===0){ showImg(f.thumb); return; }
+    const wait=document.createElement("div");
+    wait.className="muted";
+    wait.style.cssText="color:#fff;text-align:center;padding:24px";
+    wait.textContent="טוען…";
+    sl.appendChild(wait);
+    photoSrc(f).then(src=>{
+      if(!sl.parentNode) return;
+      if(src){ f.thumb=src; showImg(src); return; }
+      sl.innerHTML="";
+      const a=document.createElement("a");
+      a.className="btn";
+      a.target="_blank";
+      a.rel="noopener";
+      a.href=f.view||f.url||drivePreview(f);
+      a.textContent="פתח קובץ";
+      sl.appendChild(a);
     });
   };
   const makeSlide=(f, fromPct)=>{
