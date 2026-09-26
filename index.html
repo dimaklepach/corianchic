@@ -420,7 +420,10 @@ function runGS(name, arg, ms){
       catch(err){ clearTimeout(t); rej(err); }
       return;
     }
-    const q=API+"?action="+encodeURIComponent(name)+"&payload="+encodeURIComponent(JSON.stringify(arg||{}));
+    const body=arg||{};
+    let q=API+"?action="+encodeURIComponent(name)+"&payload="+encodeURIComponent(JSON.stringify(body));
+    if(body.fileId) q+="&fileId="+encodeURIComponent(body.fileId);
+    if(body.folderUrl) q+="&folderUrl="+encodeURIComponent(body.folderUrl);
     if(/github\.io$/i.test(location.hostname||"")){
       fetchJsonp(q, ms||25000).then(res).catch(rej);
       return;
@@ -2592,7 +2595,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1659`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1660`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
