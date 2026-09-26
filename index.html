@@ -1,0 +1,2536 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>CORIANCHIC</title>
+<link href="https:&#47;&#47;fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef4f0;--ink:#12261c;--muted:#5a6d62;--line:#d3ddd6;--green:#1b7a4e;--green-d:#145c3a;--m:#009655;--i:#e8890a;--card:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Assistant,"Segoe UI","Arial Hebrew",Arial,sans-serif;direction:rtl;overflow:hidden}
+.app{max-width:none;width:100%;margin:0;padding:8px 16px 10px;height:100%;display:flex;flex-direction:column;min-height:0;overflow:hidden;box-sizing:border-box}
+#main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+#main.scroll-main{overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px}
+#main.cal-fill{overflow:hidden;display:flex;flex-direction:column}
+.cal-wrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.cal-wd-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;flex:0 0 auto}
+.cal-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(0,1fr);gap:3px}
+.cal-cell{background:#fff;border:1px solid #111;border-radius:2px;padding:4px;overflow:hidden;min-height:0}
+.cal-month .cal-cell{overflow:hidden;border-radius:2px}
+.cal-cell.week{overflow:auto}
+.cal-cell b{font-size:12px;display:block}
+.cal-ev{font-size:13px;margin-top:4px;padding:5px 6px;border-radius:8px;line-height:1.3;cursor:pointer;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.day-slot{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:0 0 6px;background:#fff;box-sizing:border-box}
+.day-h{width:54px;flex:0 0 54px;font-weight:800;padding-top:6px}
+.day-evs{flex:1;min-width:0}
+.day-evs .cal-ev{margin-top:0;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-drop{height:32px;margin:6px 0;border:1px dashed #145c3a;border-radius:8px;background:#e8f6ee}
+.cal-ev.ghost{opacity:.35}
+.cal-week .cal-ev{white-space:normal;overflow:visible;font-size:14px}
+.cal-month .cal-ev{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-ev.m{background:#d9efe3;color:#145c3a}
+.cal-ev.i{background:#ffd0a8;color:#9a3b00}
+.cal-wd{text-align:center;font-size:11px;font-weight:800;color:var(--muted);padding:2px 0}
+.pane-head{flex:0 0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex:0 0 auto}
+.top .kpis{flex:1;justify-content:center;margin:0;flex-wrap:nowrap}
+.logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--green),#2db36b);color:#fff;display:grid;place-items:center;font-weight:800}
+h1{font-size:18px;margin:0}
+.muted{color:var(--muted);font-size:12px}
+.search{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;margin:0 0 8px;background:#fff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.chip{background:#fff;border:1px solid var(--line);border-radius:11px;padding:7px 10px;font-weight:700;font-size:13px;cursor:pointer}
+.chip.on{background:#e6f6ee;border-color:var(--green);color:var(--green-d)}
+.kpis{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 8px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.15;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:64px;text-align:center}
+.kpi.on{border-color:var(--green);background:#e6f6ee;color:var(--green-d)}
+.kpi b{margin:0;font-size:16px;line-height:1}
+.table-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:auto;flex:1;min-height:0}
+table{width:100%;min-width:1200px;border-collapse:collapse;table-layout:fixed}
+th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+th{color:#3d4f46;font-size:13px;font-weight:800;position:sticky;top:0;background:#e4ece7;padding:12px 8px;z-index:2}
+col.c-fold{width:52px} col.c-name{width:180px} col.c-tel{width:120px} col.c-note{width:200px}
+col.c-ag{width:90px} col.c-st{width:210px} col.c-pay{width:110px} col.c-dt{width:90px} col.c-ed{width:120px}
+tr:hover td{background:#f6fbf8;cursor:pointer}
+.cards{display:none;flex-direction:column;gap:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.badge{border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.s-הזמנה{background:#b9e4f5;color:#1a4f66}
+.s-מדידה{background:#f7c6c6;color:#8a2a2a}
+.s-שרטוט{background:#8b1c1c;color:#fff}
+.s-ממתין{background:#bfe3b6;color:#2a5c32}
+.s-CAM{background:#2b4d9b;color:#fff}
+.s-ייצור{background:#e6e6e6;color:#555}
+.s-מוכן{background:#1f6b3a;color:#fff}
+.s-הותקן{background:#e0c6ef;color:#5a3478}
+.s-גמר{background:#3a3a3a;color:#fff}
+.s-שירות{background:#ececec;color:#444}
+.p-שולם{background:#dcfce7;color:#166534}
+.p-חלקי{background:#ffedd5;color:#9a3412}
+.p-לא{background:#fee2e2;color:#991b1b}
+.navd{display:flex;gap:2px;background:#f3f6f4;border:1px solid var(--line);border-radius:0;padding:0 4px;margin:0 -12px 12px;overflow:auto;flex:0 0 auto}
+.navd button{border:0;background:transparent;padding:12px 14px;border-radius:0;font-weight:700;font-size:15px;letter-spacing:0;color:#4a5c52;cursor:pointer;font-family:inherit}
+.navd button.on{background:#fff;color:var(--green-d);box-shadow:inset 0 -3px 0 var(--green)}
+.bottom{display:none;position:fixed;bottom:0;right:0;left:0;background:#f3f6f4;border-top:1px solid var(--line)}
+.bottom button{flex:1;border:0;background:0;padding:12px 0 16px;font-weight:700;font-size:13px;color:#4a5c52;font-family:inherit}
+.bottom button.on{color:var(--green-d);background:#fff}
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(16,24,20,.45);z-index:20;padding:10px;padding-bottom:max(12px, env(safe-area-inset-bottom, 0px));overflow:hidden;align-items:stretch;justify-content:center;box-sizing:border-box}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:none;max-height:100%;height:100%;margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box}
+.modal h2{margin:0 0 4px;font-size:20px;line-height:1.25;word-break:break-word}
+.ask-ov{position:fixed;inset:0;background:rgba(16,24,20,.5);z-index:95;display:flex;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}
+.ask-box{background:#fff;border-radius:18px;padding:20px 18px 16px;max-width:380px;width:100%;box-shadow:0 16px 40px rgba(0,0,0,.2)}
+.ask-box p{margin:0 0 16px;font-size:16px;font-weight:700;line-height:1.4}
+.ask-box input{margin-bottom:12px}
+.ask-btns{display:flex;gap:8px}
+.ask-btns .btn{flex:1;min-height:44px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.modal textarea{min-height:56px;max-height:72px;resize:none}
+#evNote{max-height:none!important;min-height:120px;overflow:hidden}
+th.c-st,td.c-st{text-align:center}
+.st-nav{display:grid;grid-template-columns:28px 140px 28px;align-items:center;justify-content:center;gap:4px;direction:ltr;margin:0 auto;width:176px}
+.st-nav button{border:1px solid var(--line);background:#fff;border-radius:8px;width:26px;height:26px;cursor:pointer;font-weight:800;line-height:1;padding:0}
+.st-nav .badge{min-width:140px;justify-content:center;display:inline-flex}
+.files-box{border-top:1px solid var(--line);margin-top:8px;padding-top:8px;min-height:46vh;flex:1}
+.files-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-height:52vh;overflow:auto}
+.prod-gal{flex:1;min-height:0;overflow:auto}
+.prod-gal .files-box{flex:none!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0;padding:0;border-top:0;overflow:visible!important}
+.prod-gal .files-thumbs{max-height:none!important;height:auto!important;overflow:visible!important;flex:none!important}
+.file-th{position:relative;border:1px solid var(--line);border-radius:10px;padding:6px;background:#fff;cursor:pointer;text-align:center}
+.file-th.on{outline:2px solid var(--green);border-color:var(--green)}
+.addr-line{font-size:16px!important;font-weight:700;color:#1a1a1a;line-height:1.35}
+.file-pdf{height:180px;border-radius:8px;background:#3b0d12;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;color:#fff;gap:8px}
+.file-pdf b{background:#e53935;color:#fff;border-radius:6px;padding:4px 10px;font-size:18px;letter-spacing:.04em}
+.file-pdf small{color:#ffcdd2;font-size:12px;font-weight:700}
+.file-th img{width:100%;height:180px;object-fit:cover;border-radius:8px;background:#eef2f0;display:block}
+.file-th .pdf-mark{position:absolute;bottom:28px;left:10px;background:#e53935;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:2px 6px}
+.file-th em{display:block;font-style:normal;font-size:11px;font-weight:700;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-th .fchk{position:absolute;top:8px;left:8px;width:18px;height:18px;z-index:2}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:80;display:none;align-items:center;justify-content:center}
+#lb.on{display:flex}
+#lb img,#lb embed,#lb iframe{width:96vw;height:90vh;max-width:96vw;max-height:90vh;border:0;border-radius:8px;background:#111}
+#lb .lb-x{position:absolute;top:12px;left:12px;background:#fff;border:0;border-radius:20px;width:40px;height:40px;font-size:22px;cursor:pointer;font-weight:800}
+#lb .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:#fff;border:0;border-radius:20px;width:44px;height:44px;font-size:22px;cursor:pointer;font-weight:800}
+#lb .lb-prev{right:12px} #lb .lb-next{left:12px}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.act{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 2px;min-height:60px;cursor:pointer}
+.act svg{width:22px;height:22px}
+.act em{font-style:normal;font-size:10px;font-weight:800;color:var(--green-d)}
+.tel{color:var(--green-d);font-weight:800;text-decoration:none;direction:ltr}
+.editcell{font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap}
+.ico{width:28px;height:28px;border:1px solid var(--line);border-radius:8px;display:inline-grid;place-items:center;text-decoration:none}
+.ico svg{width:16px;height:16px}
+.ico.pc{background:#fff4cc;border-color:#e6a800}
+.fold-cell{display:inline-flex;gap:4px;align-items:center}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:9px;font-family:inherit;font-size:16px}
+label{font-size:12px;font-weight:800;color:var(--muted);display:block;margin:4px 0 2px}
+button,.btn{font-family:inherit}
+.btn{border:0;border-radius:12px;padding:10px 16px;font-weight:800;font-size:15px;cursor:pointer;background:var(--green);color:#fff}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn svg{width:22px;height:22px;display:block;flex-shrink:0}
+.sel-badge{width:auto;min-width:120px;border:0;border-radius:999px;padding:6px 12px;font-weight:800;font-size:16px}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;flex:0 0 auto;background:#fff;padding:14px 16px;padding-top:max(14px, env(safe-area-inset-top, 0px));border-bottom:1px solid var(--line);box-sizing:border-box}
+.card-actions{display:flex;gap:8px;flex-shrink:0}
+.card-body{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 28px;display:flex;flex-direction:column;box-sizing:border-box}
+.card-split{display:flex;flex-direction:row;direction:ltr;flex:1;min-height:0;height:100%}
+.card-files{width:34%;min-width:240px;max-width:34%;overflow:auto;border-right:1px solid var(--line);padding:12px;direction:rtl;box-sizing:border-box}
+.card-form{width:66%;flex:1;overflow:auto;padding:12px 16px;direction:rtl;box-sizing:border-box}
+.card-files .files-box{min-height:0;height:auto;margin:0;padding:0;border-top:0}
+.card-files .files-thumbs{max-height:none;grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+.card-files .file-th img,.card-files .file-pdf{height:100px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#145c3a;color:#fff;padding:8px 14px;border-radius:999px;display:none;z-index:30;font-weight:800}
+@media(max-width:800px){
+  .table-wrap,.navd,.ico.pc{display:none}
+  .cards,.bottom{display:flex}
+  .app{padding:8px 8px 72px}
+  .cards{flex:1;min-height:0;overflow:auto}
+  .top{flex-wrap:wrap;align-items:center}
+  .top .kpis{flex:1 1 100%;order:3;justify-content:stretch;flex-wrap:nowrap;gap:4px;margin:8px 0 4px;overflow-x:auto}
+  .kpi{flex:1;min-width:0;padding:6px 4px;font-size:10px}
+  .kpi b{font-size:14px}
+  .overlay{overflow:hidden;align-items:stretch;padding:10px;padding-bottom:max(10px, env(safe-area-inset-bottom))}
+  .modal{width:100%;height:100%;max-height:none;overflow:hidden;border-radius:16px}
+  .files-thumbs{grid-template-columns:repeat(2,1fr);max-height:none}
+  .file-th img,.file-pdf{height:28vw;min-height:88px;max-height:120px}
+  .card-split{flex-direction:column}
+  .card-form{order:1;flex:1 1 auto;overflow:visible;padding:8px 0}
+  .card-files{order:2;width:100%;max-width:none;min-width:0;max-height:38vh;overflow:auto;border-right:0;border-top:1px solid var(--line);padding:8px 0 16px;flex:0 0 auto}
+  .card-files .files-thumbs{grid-template-columns:repeat(3,1fr)}
+  .card-files .file-th img,.card-files .file-pdf{height:18vw;min-height:64px;max-height:88px}
+  .prod-gal{padding-bottom:calc(48px + env(safe-area-inset-bottom, 0px))!important;overflow:auto!important}
+  .prod-gal .files-thumbs{grid-template-columns:repeat(2,1fr);padding-bottom:40px;max-height:none!important}
+  .prod-gal .file-th img,.prod-gal .file-pdf{height:36vw;min-height:110px;max-height:180px}
+  .prod-gal .file-th em{white-space:normal;overflow:visible;text-overflow:unset;line-height:1.2;margin-bottom:6px}
+  .card-files,.card-form{width:100%;max-width:none;min-width:0}
+  .g3,.g2{grid-template-columns:1fr}
+  .card-actions{width:100%;order:-1;justify-content:flex-end}
+  .sel-badge{min-width:0;flex:1}
+  .cards .st-nav{display:flex;width:100%;max-width:none;margin:8px 0;box-sizing:border-box}
+  .cards .st-nav .badge{flex:1;min-width:0;width:auto}
+  .card-head{padding:12px 16px;padding-top:max(12px, env(safe-area-inset-top))}
+  .card-body{overflow:auto;padding:12px 16px 88px}
+  .addr-line{white-space:normal;word-break:break-word;padding:0 2px}
+  .acts{margin:10px 0;gap:6px}
+  .file-th{margin:0}
+  .prod-day{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:0 0 10px}
+  .prod-day b{display:block;margin-bottom:8px;font-size:15px}
+  .prod-day .cal-ev{white-space:normal;font-size:15px;line-height:1.35}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div>
+      <h1>CORIANCHIC</h1>
+      <div class="muted" id="sub">טוען…</div>
+    </div>
+    <div class="kpis" id="topKpi"></div>
+    <div class="logo">C</div>
+  </div>
+  <div class="navd" id="navd"></div>
+  <div id="main"></div>
+</div>
+<div class="bottom" id="navm"></div>
+<div class="overlay" id="ov"><div class="modal" id="md"></div></div>
+<div id="lb"></div>
+<div class="toast" id="toast"></div>
+<script>
+const API = ["https:","","script.google.com/macros/s/AKfycbwC43xEgPqDoU8O9uxDAPkVxOqf3-nuxZNdnb53yYgnnjAWDdX41MwhLmQUetaaIzoU/exec"].join("/");
+const IMPORT_URL = API + "?action=db";
+const DB_NAME = "corianchic";
+const STATUSES = ["הזמנה","מדידה","שרטוט","ממתין לאישור","CAM","ייצור","מוכן","הותקן/ גבייה","גמר","שירות"];
+const ORDER = "הזמנה";
+const ARCH = ["גמר"];
+let state = {view:localStorage.getItem("cc_view")||"board", role:localStorage.getItem("cc_role")||"", worker:localStorage.getItem("cc_worker")||"", rows:[], agents:[], installers:[], production:[], settings:{}, history:[], roles:{officePin:"0000",installerPin:"1111",prodPin:"2222"}, q:"", showOrders:false, showArch:false, filterStatus:"", imported:false};
+
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)}
+function ask(msg, yes="כן", no="לא"){
+  return new Promise(res=>{
+    const w=document.createElement("div");
+    w.className="ask-ov";
+    w.innerHTML=`<div class="ask-box"><p>${esc(msg)}</p><div class="ask-btns"><button type="button" class="btn" data-y>${esc(yes)}</button><button type="button" class="btn ghost" data-n>${esc(no)}</button></div></div>`;
+    document.body.appendChild(w);
+    w.querySelector("[data-y]").onclick=()=>{w.remove(); res(true)};
+    w.querySelector("[data-n]").onclick=()=>{w.remove(); res(false)};
+  });
+}
+function askInput(msg, def=""){
+  return new Promise(res=>{
+    const w=document.createElement("div");
+    w.className="ask-ov";
+    w.innerHTML=`<div class="ask-box"><p>${esc(msg)}</p><input id="askIn" value="${esc(def)}"><div class="ask-btns"><button type="button" class="btn" data-y>אישור</button><button type="button" class="btn ghost" data-n>ביטול</button></div></div>`;
+    document.body.appendChild(w);
+    const inp=w.querySelector("#askIn");
+    setTimeout(()=>inp.focus(),50);
+    w.querySelector("[data-y]").onclick=()=>{const v=inp.value.trim(); w.remove(); res(v)};
+    w.querySelector("[data-n]").onclick=()=>{w.remove(); res("")};
+  });
+}
+function askPick(msg, opts){
+  return new Promise(res=>{
+    const w=document.createElement("div");
+    w.className="ask-ov";
+    const btns=(opts||[]).map((o,i)=>`<button type="button" class="btn ${i?"ghost":""}" data-i="${i}">${esc(o.label)}</button>`).join("");
+    w.innerHTML=`<div class="ask-box"><p>${esc(msg)}</p><div class="ask-btns" style="flex-direction:column">${btns}<button type="button" class="btn ghost" data-x>ביטול</button></div></div>`;
+    document.body.appendChild(w);
+    w.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const i=+b.dataset.i; w.remove(); res(opts[i].value)});
+    w.querySelector("[data-x]").onclick=()=>{w.remove(); res("")};
+  });
+}
+function openIdb(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,1);
+    r.onupgradeneeded=()=>{const db=r.result; if(!db.objectStoreNames.contains("kv")) db.createObjectStore("kv")};
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function idbGet(k){const db=await openIdb(); return new Promise((res,rej)=>{const t=db.transaction("kv").objectStore("kv").get(k); t.onsuccess=()=>res(t.result); t.onerror=()=>rej(t.error)})}
+async function idbSet(k,v){const db=await openIdb(); return new Promise((res,rej)=>{const t=db.transaction("kv","readwrite").objectStore("kv").put(v,k); t.onsuccess=()=>res(); t.onerror=()=>rej(t.error)})}
+
+function parseUpdated(s){
+  if(!s) return "";
+  const d=new Date(s);
+  if(!isNaN(d)) return fmtDT(d);
+  return String(s);
+}
+function fmtDT(d){
+  const p=n=>String(n).padStart(2,"0");
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fmtDay(s){
+  if(!s) return "";
+  const str=String(s);
+  const he=str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(he) return `${he[1].padStart(2,"0")}/${he[2].padStart(2,"0")}/${he[3]}`;
+  const iso=str.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  const d=new Date(s);
+  if(isNaN(d)) return str.slice(0,10);
+  const p=n=>String(n).padStart(2,"0");
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
+}
+function badgeStatus(st){
+  const k = st.startsWith("ממתין") ? "ממתין" : st.startsWith("הותקן") ? "הותקן" : st;
+  return `<span class="badge s-${k}">${st||"—"}</span>`;
+}
+function badgePay(p){
+  if(!p) return "—";
+  if(p.includes("חלקי")) return `<span class="badge p-חלקי">${p}</span>`;
+  if(p.includes("לא")) return `<span class="badge p-לא">${p}</span>`;
+  return `<span class="badge p-שולם">${p}</span>`;
+}
+function isArch(r){return ARCH.includes(r.status)}
+function isOrder(r){return r.status===ORDER}
+function visible(rows){
+  return rows.filter(r=>{
+    if(state.role==="prod"){
+      if(r.status!=="ייצור") return false;
+    }else{
+      if(!state.showArch && isArch(r)) return false;
+      if(!state.showOrders && isOrder(r)) return false;
+      if(state.filterStatus==="debt"){
+        return !!(r.pay && (r.pay.includes("לא") || r.pay.includes("חלקי")));
+      }
+      if(state.filterStatus && r.status!==state.filterStatus) return false;
+    }
+    const q=(state.q||"").trim();
+    if(q){
+      const blob=[r.name,r.phone,r.phone2,r.contact,r.agent,r.notes,r.address].join(" ").toLowerCase();
+      if(!blob.includes(q.toLowerCase())) return false;
+    }
+    return true;
+  }).sort((a,b)=>createdMs(b)-createdMs(a));
+}
+function debtRows(rows){
+  return rows.filter(r=>{
+    if(!(r.pay && (r.pay.includes("לא") || r.pay.includes("חלקי")))) return false;
+    if(!state.showArch && isArch(r)) return false;
+    return true;
+  });
+}
+function mapRow(x,i){
+  return {
+    id: x.id || ("r"+(x.sheetRow||i)),
+    folderUrl: x.folderUrl||"",
+    name: x.name||"",
+    agent: x.agent||"",
+    notes: x.notes||"",
+    status: x.status||ORDER,
+    pay: x.pay||"",
+    phone: x.phone||"",
+    phone2: x.phone2||"",
+    contact: x.contact||"",
+    address: x.address||"",
+    floor: x.floor||"",
+    apt: x.apt||"",
+    measure: x.measure||"",
+    install: x.install||"",
+    noteM: x.noteM||"",
+    noteI: x.noteI||"",
+    extraDates: x.extraDates||[],
+    measureEid: x.measureEid||"",
+    installEid: x.installEid||"",
+    projects: asProjects(x.projects),
+    who: x.who||"",
+    whoMeasure: x.whoMeasure||"",
+    whoInstall: x.whoInstall||"",
+    updated: parseUpdated(x.updated||x.approved||""),
+    created: x.created||"",
+    sheetRow: x.sheetRow||null
+  };
+}
+function createdMs(r){
+  if(!r) return 0;
+  if(r.created){
+    const t=Date.parse(r.created);
+    if(!isNaN(t)) return t;
+  }
+  const n=String(r.id||"").match(/^n(\d+)/);
+  if(n) return +n[1];
+  return Number(r.sheetRow||0);
+}
+
+function asInst(x){
+  if(!x) return {name:"",email:"",pin:""};
+  if(typeof x==="string") return {name:x,email:"",pin:""};
+  return {name:x.name||"", email:x.email||"", pin:String(x.pin||x.password||"")};
+}
+function applyPack(d){
+  state.rows=(d.rows||[]).map(mapRow);
+  state.agents=d.agents||[];
+  state.installers=(d.installers||[]).map(asInst);
+  state.production=d.production||[];
+  state.settings=d.settings||{};
+  state.history=d.history||[];
+  state.roles=Object.assign({officePin:"0000",installerPin:"1111",prodPin:"2222"}, d.roles||{});
+  state.imported=true;
+  state.hideCal=d.hideCal||state.hideCal||{};
+}
+function runGS(name, arg, ms){
+  return new Promise((res,rej)=>{
+    if(typeof google!=="undefined" && google.script && google.script.run){
+      const t=setTimeout(()=>rej(new Error("gs-timeout")), ms||20000);
+      const r=google.script.run.withSuccessHandler(v=>{clearTimeout(t);res(v)}).withFailureHandler(e=>{clearTimeout(t);rej(e)});
+      try{ if(arg===undefined) r[name](); else r[name](arg); }
+      catch(err){ clearTimeout(t); rej(err); }
+      return;
+    }
+    const q=API+"?action="+encodeURIComponent(name)+"&payload="+encodeURIComponent(JSON.stringify(arg||{}));
+    fetchTo(q, ms||20000).then(res).catch(rej);
+  });
+}
+async function trashFolderOnDrive(url){
+  if(!url) return {ok:true};
+  try{
+    const out=await runGS("apiDeleteFolder",{folderUrl:url});
+    if(out&&out.ok) return out;
+  }catch(e){}
+  try{
+    const q=API+"?action=trashFolder&folderUrl="+encodeURIComponent(url);
+    const out=await fetchTo(q,20000);
+    if(out&&out.ok) return out;
+    return out||{ok:false};
+  }catch(e){
+    return {ok:false,error:String(e&&e.message||e)};
+  }
+}
+function fetchTo(url, ms){
+  return Promise.race([
+    fetch(url).then(r=>r.json()),
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error("fetch-timeout")), ms))
+  ]);
+}
+async function loadDrive(){
+  toast("טוען מ-Drive…");
+  let d;
+  try{
+    d=await runGS("apiDbGet");
+  }catch(e){
+    d=await fetchTo(IMPORT_URL, 8000);
+  }
+  if(!d || (!d.ok && !(d.rows||[]).length)) throw new Error((d&&d.error)||"drive");
+  applyPack(d);
+  await idbSet("pack",{
+    rows:state.rows, agents:state.agents, installers:state.installers, production:state.production,
+    settings:state.settings, history:state.history, roles:state.roles, hideCal:state.hideCal||{}, imported:true, at:Date.now()
+  });
+  toast("Drive · "+state.rows.length+" לקוחות");
+}
+async function saveDrive(){
+  const pack={
+    rows:state.rows, agents:state.agents, installers:state.installers,
+    production:state.production, history:state.history, settings:state.settings, roles:state.roles
+  };
+  try{
+    await runGS("apiDbSave", pack);
+    return;
+  }catch(e){}
+  try{
+    await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({action:"dbSave"},pack))});
+  }catch(e){ console.warn(e); }
+}
+async function saveLocal(){
+  await idbSet("pack",{
+    rows:state.rows, agents:state.agents, installers:state.installers, production:state.production,
+    settings:state.settings, history:state.history, roles:state.roles, hideCal:state.hideCal||{}, imported:true, at:Date.now()
+  });
+  saveDrive();
+}
+async function loadLocal(){
+  const pack=await idbGet("pack");
+  if(!pack) return false;
+  applyPack(pack);
+  return state.rows.length>0;
+}
+
+function viewsForRole(){
+  if(state.role==="installer") return [["inst","יומן שטח"],["cal","יומן"]];
+  if(state.role==="prod") return [["board","לוח ייצור"],["prod","יומן התקנות"]];
+  return [["board","לוח"],["cal","יומן"],["prod","ייצור"],["inst","מתקין"],["set","הגדרות"]];
+}
+function nav(){
+  const views=viewsForRole();
+  document.getElementById("navd").innerHTML=views.map(([id,t])=>`<button data-v="${id}" class="${state.view===id?"on":""}">${t}</button>`).join("")+`<button data-out="1">יציאה</button>`;
+  document.getElementById("navm").innerHTML=views.map(([id,t])=>`<button data-v="${id}" class="${state.view===id?"on":""}">${t}</button>`).join("");
+}
+document.body.addEventListener("click",e=>{
+  const cx=e.target.closest("[data-calx]");
+  if(cx){
+    e.preventDefault(); e.stopPropagation();
+    const ev=cx.closest("[data-caled]");
+    if(!ev) return;
+    askDeleteCal(ev.dataset);
+    return;
+  }
+  const ed=e.target.closest("[data-caled]");
+  if(ed && !e.target.closest("[data-calx]") && !ed.closest(".cal-month") && !ed.closest(".cal-week") && ed.closest("#md")){
+    e.preventDefault(); e.stopPropagation();
+    openEventEdit(ed.dataset);
+    return;
+  }
+  const del=e.target.closest("[data-delproj]");
+  if(del){
+    e.preventDefault(); e.stopPropagation();
+    const name=del.dataset.delname||"";
+    const url=del.dataset.delurl||"";
+    const cid=del.dataset.cid||"";
+    (async()=>{
+      if(!await ask("למחוק את הפרויקט "+name+" ואת התיקייה ב-Drive?","מחק","ביטול")) return;
+      toast("מוחק…");
+      const r=state.rows.find(x=>x.id===cid);
+      const out=await trashFolderOnDrive(url);
+      if(r){
+        r.projects=(r.projects||[]).filter(p=>{
+          if(url && p.url===url) return false;
+          if(!url && p.name===name) return false;
+          return true;
+        });
+        await saveLocal();
+      }
+      toast(out&&out.ok?"נמחק מ-Drive":"הוסר מהכרטיס");
+      if(r) openCard(r.id);
+    })();
+    return;
+  }
+  if(e.target.closest("[data-out]")){localStorage.removeItem("cc_role"); localStorage.removeItem("cc_worker"); localStorage.removeItem("cc_view"); state.role=""; state.worker=""; state.view="board"; render(); return}
+  const st=e.target.closest("[data-st]");
+  if(st){
+    const v=st.dataset.st;
+    state.filterStatus=(v==="all"||state.filterStatus===v)?"":v;
+    if(state.view!=="board" && state.view!=="debt") state.view="board";
+    render(); return;
+  }
+  const b=e.target.closest("[data-v]");
+  if(b){state.view=b.dataset.v; localStorage.setItem("cc_view",state.view); render()}
+});
+
+function asProjects(v){
+  if(Array.isArray(v)) return v.map(p=>typeof p==="string"?{name:p,url:""}:{name:p.name||"",url:p.url||""}).filter(p=>p.name);
+  if(!v) return [];
+  return String(v).split(",").map(s=>s.trim()).filter(Boolean).map(name=>({name,url:""}));
+}
+function folderBtn(url){
+  const ic=svgFold();
+  if(!url) return `<span class="ico" title="אין תיקייה">${ic}</span>`;
+  return `<a class="ico" href="${esc(url)}" target="_blank" rel="noopener" title="תיקייה">${ic}</a>`;
+}
+function statusIx(st){const i=STATUSES.indexOf(st); return i<0?0:i}
+async function stepStatus(id, dir){
+  if(state.role==="prod") return;
+  const r=state.rows.find(x=>x.id===id); if(!r) return;
+  const i=statusIx(r.status);
+  const n=i+dir;
+  if(n<0||n>=STATUSES.length) return toast("אין שלב נוסף");
+  const next=STATUSES[n];
+  const ok=await ask(dir>0?("לעבור לשלב הבא: "+next+"?"):("לחזור לשלב הקודם: "+next+"?"),"כן","לא");
+  if(!ok) return;
+  r.status=next; r.updated=fmtDT(new Date());
+  await saveLocal(); render();
+}
+function statusCell(r){
+  if(state.role==="prod") return `<div class="st-nav">${badgeStatus(r.status)}</div>`;
+  return `<div class="st-nav">
+    <button type="button" data-stfwd="${r.id}" title="שלב הבא">‹</button>
+    ${badgeStatus(r.status)}
+    <button type="button" data-stback="${r.id}" title="שלב קודם">›</button>
+  </div>`;
+}
+function isPdfFile(f){
+  const m=String(f.mime||"").toLowerCase();
+  const n=String(f.name||"").toLowerCase();
+  return m.indexOf("pdf")>=0 || /\.pdf$/.test(n);
+}
+function isPhotoFile(f){
+  const m=String(f.mime||"").toLowerCase();
+  const n=String(f.name||"").toLowerCase();
+  return m.indexOf("image/")===0 || /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/.test(n);
+}
+function isShowFile(f){ return isPdfFile(f)||isPhotoFile(f); }
+function waDigits(tel){
+  let s=String(tel||"").replace(/\D/g,"");
+  if(s.indexOf("0")===0) s="972"+s.slice(1);
+  return s;
+}
+function driveFileLink(f){
+  if(f&&f.id) return ["https:","","drive.google.com/file/d/"+f.id+"/view"].join("/");
+  return String((f&&(f.url||f.view))||"");
+}
+function isIos(){
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent||"");
+}
+function showWaOpen(url){
+  const old=document.getElementById("waOpen");
+  if(old) old.remove();
+  const b=document.createElement("div");
+  b.id="waOpen";
+  b.style.cssText="position:fixed;inset:0;background:rgba(20,20,20,.55);z-index:140;display:flex;align-items:center;justify-content:center;padding:24px";
+  const a=document.createElement("a");
+  a.className="btn";
+  a.href=url;
+  a.target="_blank";
+  a.rel="noopener";
+  a.textContent="פתח WhatsApp";
+  a.style.cssText="display:block;text-align:center;padding:18px 28px;font-size:18px";
+  a.addEventListener("click",()=>setTimeout(()=>{ try{b.remove();}catch(e){} },200));
+  const x=document.createElement("button");
+  x.type="button";
+  x.className="btn ghost";
+  x.textContent="ביטול";
+  x.style.cssText="margin-top:10px;width:100%";
+  x.onclick=()=>b.remove();
+  const box=document.createElement("div");
+  box.style.cssText="background:#fff;border-radius:16px;padding:20px;max-width:360px;width:100%;text-align:center";
+  box.appendChild(a);
+  box.appendChild(x);
+  b.appendChild(box);
+  document.body.appendChild(b);
+}
+function openWaChat(tel, text){
+  const n=waDigits(tel);
+  if(!n) return;
+  let msg=String(text||"");
+  if(msg.length>1200) msg=msg.slice(0,1200)+"\n…";
+  const me=["https:","","wa.me/"+n].join("/")+(msg?("?text="+encodeURIComponent(msg)):"");
+  try{ window.open(me, "_blank"); }catch(e){}
+  showWaOpen(me);
+}
+function whenPageBack(fn){
+  let done=false;
+  const run=()=>{ if(done) return; done=true; document.removeEventListener("visibilitychange", vis); fn(); };
+  const vis=()=>{ if(document.visibilityState==="visible") run(); };
+  document.addEventListener("visibilitychange", vis);
+  setTimeout(run, 1200);
+}
+function showWaAttachBar(pack, tel, name){
+  const old=document.getElementById("waAttach");
+  if(old) old.remove();
+  const b=document.createElement("div");
+  b.id="waAttach";
+  b.style.cssText="position:fixed;bottom:78px;left:12px;right:12px;z-index:95";
+  b.innerHTML=`<button type="button" class="btn" style="width:100%">צרף קבצים ל-WhatsApp</button>`;
+  b.querySelector("button").onclick=()=>{
+    pack.forEach(saveLocalFile);
+    toast("הקבצים ירדו. בשיחה לחץ 📎 ובחר מההורדות");
+    b.remove();
+  };
+  document.body.appendChild(b);
+}
+function instOptions(sel){
+  return `<option value="">—</option>`+(state.installers||[]).map(p=>{
+    const n=nameOf(p);
+    return `<option ${n===sel?"selected":""}>${esc(n)}</option>`;
+  }).join("");
+}
+async function loadFiles(r){
+  if(!r||!r.folderUrl) return [];
+  try{
+    const out=await runGS("apiListFiles",{folderUrl:r.folderUrl},60000);
+    return (out&&out.files)||[];
+  }catch(e){ return []; }
+}
+function filesTitle(files, fallback){
+  const show=(files||[]).filter(isShowFile);
+  if(!show.length) return fallback||"קבצים";
+  const nP=show.filter(isPdfFile).length;
+  const nI=show.length-nP;
+  return "קבצים · "+show.length+(nI?" · "+nI+" תמונות":"")+(nP?" · "+nP+" PDF":"");
+}
+function driveThumbUrl(id){
+  return ["https:","","drive.google.com/thumbnail?id="+encodeURIComponent(id)+"&sz=w240"].join("/");
+}
+function applyThumb(f, src){
+  if(!f||!src) return;
+  f.thumb=src;
+  const cell=document.querySelector('#fileThumbs .file-th[data-fid="'+f.id+'"]');
+  if(!cell) return;
+  let img=cell.querySelector("img");
+  if(!img){
+    img=document.createElement("img");
+    img.alt="";
+    const ph=cell.querySelector(".file-pdf");
+    if(ph) ph.replaceWith(img);
+    else cell.insertBefore(img, cell.querySelector("em"));
+  }
+  img.src=src;
+  img.style.display="block";
+}
+function tryUrlThumb(f){
+  return new Promise(res=>{
+    const url=driveThumbUrl(f.id);
+    const im=new Image();
+    const t=setTimeout(()=>{ im.onload=im.onerror=null; res(""); }, 2200);
+    im.onload=()=>{ clearTimeout(t); res(url); };
+    im.onerror=()=>{ clearTimeout(t); res(""); };
+    im.referrerPolicy="no-referrer";
+    im.src=url;
+  });
+}
+async function fillThumbs(files){
+  const list=(files||[]).filter(f=>f&&f.id&&isShowFile(f)&&!f.thumb);
+  await Promise.all(list.map(async f=>{
+    const u=await tryUrlThumb(f);
+    if(u) applyThumb(f,u);
+  }));
+  const rest=list.filter(f=>!f.thumb);
+  let i=0;
+  async function worker(){
+    while(i<rest.length){
+      const f=rest[i++];
+      try{
+        const t=await runGS("apiFileThumb",{fileId:f.id},20000);
+        if(t&&t.ok&&t.thumb) applyThumb(f,t.thumb);
+      }catch(e){}
+    }
+  }
+  await Promise.all([worker(),worker(),worker(),worker()]);
+}
+function filesBlockHtml(files, opts){
+  opts=opts||{};
+  const show=(files||[]).filter(isShowFile);
+  const thumbs=show.map((f,i)=>`<div class="file-th" data-i="${i}" data-fid="${esc(f.id)}" data-furl="${esc(f.view||f.url)}" data-fname="${esc(f.name)}" data-pdf="${isPdfFile(f)?"1":""}">
+      <input type="checkbox" class="fchk">
+      ${isPdfFile(f)
+        ? (f.thumb
+            ? `<img src="${esc(f.thumb)}" alt=""><span class="pdf-mark">PDF</span>`
+            : `<div class="file-pdf"><b>PDF</b><small>לחץ לפתיחה</small></div>`)
+        : `<img src="${esc(f.thumb||"")}" alt="">`}
+      <em>${esc(f.name)}</em>
+    </div>`).join("");
+  const body=opts.loading
+    ? `<span class="muted">מסנכרן קבצים…</span>`
+    : (thumbs||`<span class="muted">אין PDF או תמונות</span>`);
+  return `<div class="files-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <b>${esc(opts.title||filesTitle(files))}</b>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${opts.back?`<button class="btn ghost" type="button" id="filesBack">חזרה</button>`:""}
+        ${opts.upload?`<button class="btn ghost" type="button" id="addFiles">העלאת קבצים</button><input id="fileIn" type="file" multiple style="display:none">`:""}
+        ${opts.send?`<button class="btn ghost" type="button" id="sendCopy">שלח עותק</button>`:""}
+      </div>
+    </div>
+    <div class="files-thumbs ${opts.inst?"inst":""}" id="fileThumbs">${body}</div>
+  </div>`;
+}
+function drivePreview(f){
+  if(f&&f.id) return ["https:","","drive.google.com/file/d/"+f.id+"/preview"].join("/");
+  return f&&(f.view||f.url)||"";
+}
+function openLightbox(files, i){
+  const list=(files||[]).filter(isShowFile);
+  if(!list.length) return;
+  let n=i||0;
+  const box=document.getElementById("lb");
+  const draw=()=>{
+    const f=list[n];
+    const src=drivePreview(f);
+    box.className="on";
+    box.innerHTML=`<button class="lb-x" type="button">×</button>
+      <button class="lb-nav lb-prev" type="button">‹</button>
+      <iframe src="${esc(src)}" allow="autoplay"></iframe>
+      <button class="lb-nav lb-next" type="button">›</button>`;
+    box.querySelector(".lb-x").onclick=e=>{e.stopPropagation(); box.className=""; box.innerHTML="";};
+    box.querySelector(".lb-prev").onclick=e=>{e.stopPropagation(); n=(n+list.length-1)%list.length; draw();};
+    box.querySelector(".lb-next").onclick=e=>{e.stopPropagation(); n=(n+1)%list.length; draw();};
+  };
+  box.onclick=e=>{ if(e.target===box){ box.className=""; box.innerHTML=""; } };
+  draw();
+}
+function bindFileBox(r, files){
+  const show=(files||[]).filter(isShowFile);
+  document.querySelectorAll("#fileThumbs .file-th").forEach(th=>{
+    const chk=th.querySelector(".fchk");
+    if(chk) chk.onchange=e=>{ e.stopPropagation(); th.classList.toggle("on",chk.checked); };
+    if(chk) chk.onclick=e=>e.stopPropagation();
+    th.addEventListener("click",()=>openLightbox(show, +th.dataset.i||0));
+  });
+  const send=document.getElementById("sendCopy");
+  if(send) send.onclick=()=>sendSelectedCopies(r);
+}
+function selectedFiles(){
+  return [...document.querySelectorAll("#fileThumbs .file-th")].filter(th=>th.querySelector(".fchk")&&th.querySelector(".fchk").checked)
+    .map(th=>({id:th.dataset.fid, url:th.dataset.furl, name:th.dataset.fname}));
+}
+function b64ToFile(b64, name, mime){
+  const bin=atob(b64);
+  const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new File([arr], name||"file", {type:mime||"application/octet-stream"});
+}
+function isSendName(name){
+  const n=String(name||"").toLowerCase();
+  return /\.(jpe?g|png|gif|webp|heic|heif|bmp|pdf)$/.test(n);
+}
+function guessMime(name){
+  const n=String(name||"").toLowerCase();
+  if(n.endsWith(".pdf")) return "application/pdf";
+  if(n.endsWith(".png")) return "image/png";
+  if(n.endsWith(".gif")) return "image/gif";
+  if(n.endsWith(".webp")) return "image/webp";
+  if(/\.(jpe?g)$/.test(n)) return "image/jpeg";
+  return "application/octet-stream";
+}
+async function loadLocalActive(){
+  try{
+    const h=await idbGet("localActive");
+    const n=await idbGet("localActiveName");
+    if(n) state.localActiveName=n;
+    return h||null;
+  }catch(e){ return null; }
+}
+async function ensureDirPerm(handle){
+  if(!handle) return false;
+  const q={mode:"read"};
+  try{
+    if((await handle.queryPermission(q))==="granted") return true;
+    return (await handle.requestPermission(q))==="granted";
+  }catch(e){ return false; }
+}
+function pickViaInput(opts){
+  opts=opts||{};
+  return new Promise(res=>{
+    const inp=document.createElement("input");
+    inp.type="file";
+    inp.multiple=true;
+    if(opts.dir) inp.setAttribute("webkitdirectory","");
+    else inp.accept=opts.accept||".pdf,image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.heic";
+    inp.style.position="fixed"; inp.style.left="-9999px";
+    const done=files=>{ try{inp.remove();}catch(e){} res(files||[]); };
+    inp.addEventListener("change",()=>done([...inp.files||[]]));
+    inp.addEventListener("cancel",()=>done([]));
+    document.body.appendChild(inp);
+    inp.click();
+    setTimeout(()=>{ if(!inp.files||!inp.files.length){ /* wait for user */ } },0);
+  });
+}
+async function pickLocalActiveFolder(){
+  try{
+    if(window.showDirectoryPicker){
+      try{
+        const h=await window.showDirectoryPicker({id:"cc-active", mode:"read"});
+        await idbSet("localActive", h);
+        await idbSet("localActiveName", h.name||"Active");
+        state.localActiveName=h.name||"Active";
+        toast("תיקייה במחשב: "+state.localActiveName);
+        render();
+        return;
+      }catch(e){
+        if(String(e&&e.name)==="AbortError") return;
+      }
+    }
+    const files=await pickViaInput({dir:true});
+    if(!files.length) return toast("החלון נסגר בלי בחירה");
+    const rel=String(files[0].webkitRelativePath||files[0].name||"");
+    const top=rel.split("/")[0]||rel.split("\\")[0]||"Active";
+    await idbSet("localActiveName", top);
+    state.localActiveName=top;
+    toast("תיקייה: "+top+" · בפעם הבאה ייפתח חלון הקבצים");
+    render();
+  }catch(e){
+    if(String(e&&e.name)==="AbortError") return;
+    toast("לא נפתח חלון. Chrome/Edge במחשב");
+  }
+}
+async function clientDirHandle(r){
+  const root=await loadLocalActive();
+  if(!root || !await ensureDirPerm(root)) return null;
+  const want=String((r&&r.name)||"").trim();
+  if(!want) return null;
+  try{ return await root.getDirectoryHandle(want); }catch(e){}
+  try{
+    for await (const [name, ent] of root.entries()){
+      if(ent.kind==="directory" && name.replace(/\s+/g," ")===want.replace(/\s+/g," ")) return ent;
+    }
+  }catch(e){}
+  return root;
+}
+function inClientPath(file, want){
+  if(!isSendName(file.name)) return false;
+  if(!want) return true;
+  const p=String(file.webkitRelativePath||file.name).replace(/\\/g,"/");
+  const parts=p.split("/").filter(Boolean);
+  const w=want.replace(/\s+/g," ").trim();
+  return parts.some(x=>x.replace(/\s+/g," ").trim()===w) || p.indexOf(want)>=0;
+}
+async function pickFilesFromClientFolder(r){
+  const want=String((r&&r.name)||"").trim();
+  const dir=await clientDirHandle(r);
+  if(dir && dir.name && want && dir.name.replace(/\s+/g," ")===want.replace(/\s+/g," ")){
+    try{
+      const files=[];
+      for await (const [,ent] of dir.entries()){
+        if(ent.kind!=="file") continue;
+        if(!isSendName(ent.name)) continue;
+        files.push(await ent.getFile());
+      }
+      if(files.length) return files;
+    }catch(e){}
+  }
+  toast("בחלון בחרו את תיקיית הלקוח: "+(want||""));
+  const picked=await pickViaInput({dir:true});
+  if(!picked.length) return [];
+  const only=picked.filter(f=>inClientPath(f, want));
+  if(only.length) return only;
+  return picked.filter(f=>isSendName(f.name));
+}
+function saveLocalFile(file){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(file);
+  a.download=file.name||"file";
+  a.rel="noopener";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function uniqueSendName(file, i){
+  const raw=String(file&&file.name||"file").replace(/[\\/:*?"<>|]+/g,"_");
+  return String(i+1)+"-"+Date.now()+"-"+raw;
+}
+function saveBlindFile(file){
+  const name=(file.name||"file")+".ccbin";
+  const raw=new File([file], name, {type:"application/octet-stream"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(raw);
+  a.download=name;
+  a.rel="noopener";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+async function pullDriveFiles(sel){
+  const out=[];
+  for(const f of sel){
+    toast("מוריד · "+(f.name||""));
+    let d=null;
+    try{ d=await runGS("apiGetFile",{fileId:f.id},60000); }catch(e){ d=null; }
+    if(!d||!d.ok||!d.data) throw new Error((d&&d.error)||f.name||"file");
+    out.push(b64ToFile(d.data, d.name||f.name, d.mime));
+  }
+  return out;
+}
+async function tryShare(pack){
+  if(!navigator.share) return "no";
+  try{
+    if(pack.files && navigator.canShare && !navigator.canShare(pack)){
+      if(pack.files.length>1){
+        for(const f of pack.files){
+          const one={files:[f], title:pack.title, text:pack.text};
+          if(!navigator.canShare || navigator.canShare(one)) await navigator.share(one);
+          else return "no";
+        }
+        return "shared";
+      }
+      return "no";
+    }
+    await navigator.share(pack);
+    return "shared";
+  }catch(e){
+    if(String(e&&e.name)==="AbortError") return "abort";
+    return "no";
+  }
+}
+async function shareViaWhatsApp(files, tel, caption){
+  let mode=await tryShare({files:files, title:"CORIANCHIC", text:caption||""});
+  if(mode==="no") mode=await tryShare({files:files, title:"CORIANCHIC"});
+  if(mode==="shared"||mode==="abort") return mode;
+  files.forEach(saveLocalFile);
+  return "download";
+}
+function isDeskPc(){
+  const ua=navigator.userAgent||"";
+  return !/Android|iPhone|iPad|iPod/i.test(ua);
+}
+function launchShareHelper(tel, name, files){
+  const names=files.map(f=>f.name||"file").join("|");
+  const q="phone="+encodeURIComponent(waDigits(tel))+"&name="+encodeURIComponent(name||"")+"&files="+encodeURIComponent(names);
+  const url=["corianchic-share:","","send?"+q].join("/");
+  window.location.href=url;
+}
+async function sendSelectedCopies(r){
+  let files=[];
+  let sel=selectedFiles().filter(f=>isSendName(f.name));
+  if(!sel.length){
+    const src=await askPick("לא נבחר קובץ",[
+      {label:"לבחור מהכרטיס",value:"card"},
+      {label:"לבחור מהמחשב",value:"pc"}
+    ]);
+    if(!src) return;
+    if(src==="card") return toast("סמן PDF או תמונה בכרטיס");
+    const local=isDeskPc()?await pickFilesFromClientFolder(r):await pickViaInput();
+    files=(local||[]).filter(f=>isSendName(f.name));
+    if(!files.length) return toast("לא נבחרו PDF או תמונות");
+  }
+  const how=await askPick("איך לשלוח עותק?",[{label:"WhatsApp",value:"wa"},{label:"Gmail",value:"mail"}]);
+  if(!how) return;
+  if(how==="wa" && !isDeskPc() && sel.length){
+    files=[];
+  }else if(!files.length){
+    try{ files=await pullDriveFiles(sel); }
+    catch(e){ return toast("לא הורד הקובץ · "+e.message); }
+    files=files.filter(f=>isSendName(f.name));
+  }
+  if(how!=="wa" && !files.length) return toast("בחר PDF או תמונה");
+  if(how==="wa"){
+    const live1=document.getElementById("f_phone");
+    const live2=document.getElementById("f_phone2");
+    const tels=[live1&&live1.value, live2&&live2.value, r.phone, r.phone2]
+      .map(x=>String(x||"").trim()).filter((x,i,a)=>x && a.indexOf(x)===i);
+    let tel="";
+    if(tels.length>1) tel=await askPick("לאיזה מספר?",tels.map(t=>({label:t,value:t})));
+    else tel=tels[0]||"";
+    if(!tel) tel=await askInput("מספר WhatsApp", r.phone||"");
+    if(!tel || !waDigits(tel)) return toast("אין טלפון");
+    if(!r.phone) r.phone=tel;
+    if(isDeskPc()){
+      if(!await ask("הקבצים יורדים ואז ייפתח WhatsApp עם התצוגה. שלח רק אחרי לחצן שלח.","המשך","ביטול")) return;
+      const pack=files.map((f,i)=>new File([f], uniqueSendName(f,i), {type:f.type||"application/octet-stream"}));
+      pack.forEach(saveBlindFile);
+      toast("מוריד ואז WhatsApp…");
+      setTimeout(()=>launchShareHelper(tel, r.name||"", pack), 1800);
+      return;
+    }
+    const fromCard=(sel||[]).filter(f=>f.id||f.url||f.view);
+    if(!fromCard.length) return toast("סמן קובץ בכרטיס לשליחת קישור");
+    if(!await ask("הקישור יהיה פתוח לכל מי שיש לו אותו. ייפתח הצ'אט. שלח ידני.","המשך","ביטול")) return;
+    try{
+      await runGS("apiShareLink",{fileIds:fromCard.map(f=>f.id).filter(Boolean)});
+    }catch(e){
+      toast("לא הוענק גישה · "+(e&&e.message||""));
+    }
+    const lines=[r.name||""].concat(fromCard.map(f=>(f.name||"קובץ")+"\n"+driveFileLink(f)));
+    openWaChat(tel, lines.filter(Boolean).join("\n\n"));
+    toast("בשיחה יש קישור. לחץ שלח");
+    return;
+  }
+  const mail=await askInput("כתובת Gmail","");
+  if(!mail) return;
+  if(navigator.canShare && navigator.canShare({files:files})){
+    if(!await ask("לשתף ל-Gmail? שליחה ידנית.","המשך","ביטול")) return;
+    try{ await navigator.share({files:files, title:"CORIANCHIC"}); return toast("בחר Gmail ולחץ שלח"); }
+    catch(e){ if(String(e&&e.name)==="AbortError") return; }
+  }
+  files.forEach(saveLocalFile);
+  toast("הקבצים ירדו. צרף ב-Gmail ולחץ שלח");
+}
+function counts(rows){
+  const hold=state.filterStatus; state.filterStatus="";
+  const vis=visible(rows);
+  state.filterStatus=hold;
+  const map={};
+  vis.forEach(r=>map[r.status]=(map[r.status]||0)+1);
+  const tone={
+    "מדידה":"background:#f7c6c6;color:#8a2a2a;border-color:#e8a0a0",
+    "שרטוט":"background:#8b1c1c;color:#fff;border-color:#6a1414",
+    "CAM":"background:#2b4d9b;color:#fff;border-color:#1e3878",
+    "ייצור":"background:#e6e6e6;color:#555;border-color:#ccc",
+    "מוכן":"background:#1f6b3a;color:#fff;border-color:#145028"
+  };
+  const pick=k=>state.filterStatus===k?"box-shadow:inset 0 0 0 2px currentColor":"";
+  return `<div class="kpi ${!state.filterStatus?"on":""}" data-st="all" style="background:#fff;color:var(--ink)"><span>כל הפעילים</span><b>${vis.length}</b></div>`+
+    ["מדידה","שרטוט","CAM","ייצור","מוכן"].map(s=>`<div class="kpi" data-st="${s}" style="${tone[s]};${pick(s)}"><span>${s}</span><b>${map[s]||0}</b></div>`).join("")+
+    `<div class="kpi" data-st="debt" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;${pick("debt")}"><span>חייבים</span><b>${debtRows(state.rows).length}</b></div>`;
+}
+
+function renderBoard(){
+  const rows=visible(state.rows);
+  return `<div class="pane-head"><label>חיפוש</label>
+    <input class="search" id="q" placeholder="לקוח, טלפון, סוכן" value="${state.q||""}" style="margin-bottom:6px">
+    <div class="toolbar" style="margin-bottom:6px;justify-content:space-between">
+      ${state.role==="prod"?`<span class="muted">קריאה בלבד · ייצור</span>`:`<button class="btn" type="button" id="btnNew">לקוח חדש</button>`}
+      ${state.role==="prod"?"":`<div style="display:flex;gap:8px">
+        <span class="chip ${state.showOrders?"on":""}" id="togOrd">הצג הזמנות</span>
+        <span class="chip ${state.showArch?"on":""}" id="togArch">הצג ארכיון</span>
+      </div>`}
+    </div></div>
+    <div class="table-wrap"><table><colgroup>
+      <col class="c-fold"><col class="c-name"><col class="c-tel"><col class="c-note"><col class="c-ag"><col class="c-st"><col class="c-pay"><col class="c-dt"><col class="c-dt"><col class="c-ed">
+    </colgroup><thead><tr>
+      <th>תיקייה</th><th>לקוח</th><th>טלפון</th><th>הערה אחרונה</th><th>סוכן</th><th class="c-st">סטטוס</th><th>תשלום</th><th>מדידה</th><th>התקנה</th><th>עריכה</th>
+    </tr></thead><tbody>
+    ${rows.slice(0,200).map(r=>`<tr data-id="${r.id}">
+      <td>${folderBtn(r.folderUrl)}</td>
+      <td><b>${esc(r.name)}</b>${r.contact?`<div class="muted">קשר: ${esc(r.contact)}</div>`:""}</td>
+      <td>${r.phone?`<a class="tel" href="tel:${r.phone}">${esc(r.phone)}</a>`:"—"}</td>
+      <td>${esc(r.notes||"—")}</td>
+      <td>${esc(r.agent||"—")}</td>
+      <td class="c-st">${statusCell(r)}</td>
+      <td>${badgePay(r.pay)}</td>
+      <td>${esc(fmtDay(r.measure)||"—")}</td>
+      <td>${esc(fmtDay(r.install)||"—")}</td>
+      <td class="editcell">${esc(r.updated||"—")}</td>
+    </tr>`).join("")}
+    </tbody></table></div>
+    <div class="cards">${rows.slice(0,80).map(r=>`<div class="card" data-id="${r.id}">
+      <div><b>${esc(r.name)}</b></div>
+      ${statusCell(r)}
+      <div class="muted">${esc(r.agent||"")} · ${r.phone||""} · ${esc(r.notes||"")}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px" class="editcell"><span>${esc(r.updated||"")}</span>${folderBtn(r.folderUrl)}</div>
+    </div>`).join("")}</div>`;
+}
+function renderDebt(){
+  const rows=debtRows(state.rows);
+  return `<div class="pane-head"><div class="toolbar">
+      <span class="chip ${state.showArch?"on":""}" id="togArch">הצג ארכיון</span>
+    </div>
+    <div class="muted" style="margin-bottom:8px">${state.showArch?"פעילים + ארכיון":"רק פעילים"} · ${rows.length}</div></div>
+    <div class="table-wrap"><table><colgroup>
+      <col class="c-fold"><col class="c-name"><col class="c-tel"><col class="c-note"><col class="c-ag"><col class="c-st"><col class="c-pay"><col class="c-dt"><col class="c-dt"><col class="c-ed">
+    </colgroup><thead><tr>
+      <th>תיקייה</th><th>לקוח</th><th>טלפון</th><th>הערה אחרונה</th><th>סוכן</th><th class="c-st">סטטוס</th><th>תשלום</th><th>מדידה</th><th>התקנה</th><th>עריכה</th>
+    </tr></thead><tbody>
+    ${rows.map(r=>`<tr data-id="${r.id}">
+      <td>${folderBtn(r.folderUrl)}</td>
+      <td><b>${esc(r.name)}</b></td>
+      <td>${r.phone?`<a class="tel" href="tel:${r.phone}">${esc(r.phone)}</a>`:"—"}</td>
+      <td>${esc(r.notes||"—")}</td>
+      <td>${esc(r.agent||"—")}</td>
+      <td>${badgeStatus(r.status)}</td>
+      <td>${badgePay(r.pay)}</td>
+      <td>${esc(fmtDay(r.measure)||"—")}</td>
+      <td>${esc(fmtDay(r.install)||"—")}</td>
+      <td class="editcell">${esc(r.updated||"—")}</td>
+    </tr>`).join("")}</tbody></table></div>
+    <div class="cards">${rows.map(r=>`<div class="card" data-id="${r.id}">
+      <div style="display:flex;justify-content:space-between"><b>${esc(r.name)}</b>${badgePay(r.pay)}</div>
+      <div class="muted">${r.status}</div>
+      ${r.phone?`<div style="margin-top:6px"><a class="tel" href="tel:${r.phone}">${esc(r.phone)}</a></div>`:""}
+    </div>`).join("")}</div>`;
+}
+function evKind(e){
+  const t=((e.note||"")+" "+(e.title||"")+" "+(e.name||"")+" "+(e.kind||"")).toLowerCase();
+  if(/התקנ|установ|install|\bi\b/.test(t)) return "i";
+  if(/מדיד|замер|measure|\bm\b/.test(t)) return "m";
+  return e.kind==="i"?"i":"m";
+}
+function calEvents(){
+  const out=[];
+  state.rows.forEach(r=>{
+    if(r.measure) out.push({kind:"m", start:r.measure, name:r.name, note:r.noteM||"", id:r.id});
+    if(r.install) out.push({kind:"i", start:r.install, name:r.name, note:r.noteI||"", id:r.id});
+    (r.extraDates||[]).forEach(x=>out.push({kind:x.kind==="install"||x.kind==="i"?"i":"m", start:x.start, name:r.name, note:x.note||"", id:r.id}));
+  });
+  const hide=state.hideCal||{};
+  (state.gcal||[]).forEach(e=>{
+    if(hide[e.id]||hide[e.start+"|"+(e.title||e.name||"")]) return;
+    out.push({kind:evKind(e), start:e.start, name:e.title||e.name||"", note:e.note||"", id:e.id, g:1});
+  });
+  return out.filter(e=>!hide[e.id] && !hide[(e.start||"")+"|"+(e.name||"")]);
+}
+function mondayOf(d){
+  const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  x.setDate(x.getDate()-x.getDay());
+  return x;
+}
+function renderCal(){
+  if(!state.calMonth) state.calMonth=new Date();
+  if(!state.calMode) state.calMode="month";
+  const ev=calEvents();
+  const week=state.calMode==="week";
+  const wd=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
+  const evTime=e=>{
+    const t=String(e.start||"").match(/(\d{1,2}:\d{2})/);
+    return t?t[1]:"";
+  };
+  const evHtml=(e,full)=>`<div class="cal-ev ${evKind(e)}" ${week?"draggable=\"true\" style=\"cursor:grab\"":"style=\"cursor:pointer\""} data-calid="${esc(e.id||"")}" data-calkind="${evKind(e)}" data-calstart="${esc(e.start||"")}" data-calg="${e.g?"1":""}" data-calname="${esc(e.name||"")}" data-calnote="${esc(e.note||"")}">${esc((evTime(e)?evTime(e)+" ":"")+shortEvName(e))}</div>`;
+  let title="", cells="";
+  if(week){
+    const mon=mondayOf(state.calMonth);
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    title=fmtDay(mon)+" – "+fmtDay(sun);
+    for(let i=0;i<7;i++){
+      const d=new Date(mon); d.setDate(mon.getDate()+i);
+      const key=fmtDay(d);
+      const here=ev.filter(e=>fmtDay(e.start)===key);
+      cells+=`<div class="cal-cell week" data-day="${key}" data-shab="${i===6?"1":""}" data-sun="${i===0?"1":""}"><b>${wd[i]} ${d.getDate()}/${d.getMonth()+1}</b>${here.map(e=>evHtml(e,true)).join("")}</div>`;
+    }
+  }else{
+    const d0=new Date(state.calMonth.getFullYear(), state.calMonth.getMonth(), 1);
+    const y=d0.getFullYear(), m=d0.getMonth();
+    const first=d0.getDay();
+    const dim=new Date(y,m+1,0).getDate();
+    title=d0.toLocaleDateString("he-IL",{month:"long",year:"numeric"});
+    for(let i=0;i<first;i++) cells+=`<div class="cal-cell"></div>`;
+    for(let day=1;day<=dim;day++){
+      const key=fmtDay(new Date(y,m,day));
+      const here=ev.filter(e=>fmtDay(e.start)===key);
+      cells+=`<div class="cal-cell" data-day="${key}"><b>${day}</b>${here.map(e=>evHtml(e,false)).join("")}</div>`;
+    }
+  }
+  return `<div class="cal-wrap">
+    <div class="toolbar" style="flex:0 0 auto">
+      <span class="chip" id="calPrev">‹</span>
+      <b>${esc(title)}</b>
+      <span class="chip" id="calNext">›</span>
+      <span class="chip ${state.calMode==="month"?"on":""}" id="calMonthBtn">חודש</span>
+      <span class="chip ${state.calMode==="week"?"on":""}" id="calWeekBtn">שבוע</span>
+      <span class="badge s-מדידה">מדידה</span>
+      <span class="badge" style="background:#ffd0a8;color:#9a3b00">התקנה</span>
+    </div>
+    ${week?"":`<div class="cal-wd-row">${wd.map(w=>`<div class="cal-wd">${w}</div>`).join("")}</div>`}
+    <div class="cal-grid ${week?"cal-week":"cal-month"}">${cells}</div>
+  </div>`;
+}
+function isoDay(d){
+  const p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+async function loadGcal(){
+  const s=state.settings||{};
+  const calId=s.calMeasure||s.calInstall||s.calendarId||"";
+  if(!calId) return;
+  const d=state.view==="prod"?prodSunday():(state.calMonth||new Date());
+  let a,b;
+  if(state.calMode==="week"||state.view==="prod"){
+    a=mondayOf(d); b=new Date(a); b.setDate(a.getDate()+7);
+  }else{
+    a=new Date(d.getFullYear(),d.getMonth(),1);
+    b=new Date(d.getFullYear(),d.getMonth()+1,1);
+  }
+  const key=isoDay(a)+"|"+isoDay(b)+"|"+calId;
+  if(state._gcalKey===key) return;
+  state._gcalKey=key;
+  try{
+    const out=await runGS("apiCalList",{from:isoDay(a),to:isoDay(b),calId});
+    if(out&&out.ok){
+      const hide=state.hideCal||{};
+      state.gcal=(out.events||[]).filter(e=>!hide[e.id]);
+      if(state.view==="cal"||state.view==="prod") render();
+    }
+  }catch(e){}
+}
+function keepTime(oldStamp, day){
+  const tm=String(oldStamp||"").match(/(\d{1,2}:\d{2})/);
+  return day+" "+(tm?tm[1]:"09:00");
+}
+function applyCalMove(payload, day, hour){
+  if(!payload||!day) return;
+  const stamp=hour?(day+" "+hour):keepTime(payload.start, day);
+  if(payload.g){
+    const iso=day.split("/").reverse().join("-")+"T"+(stamp.match(/(\d{1,2}:\d{2})/)||["","09:00"])[1];
+    runGS("apiCalMove",{eventId:payload.id, start:iso}).catch(()=>{});
+    (state.gcal||[]).forEach(e=>{ if(e.id===payload.id) e.start=stamp; });
+    return;
+  }
+  const r=state.rows.find(x=>x.id===payload.id);
+  if(!r) return;
+  const old=payload.start;
+  if(payload.kind==="m" && r.measure===old) r.measure=stamp;
+  else if(payload.kind==="i" && r.install===old) r.install=stamp;
+  else (r.extraDates||[]).forEach(x=>{ if(x.start===old) x.start=stamp; });
+  r.updated=fmtDT(new Date());
+  saveLocal();
+}
+function bindCal(){
+  let hold=null;
+  document.querySelectorAll(".cal-ev").forEach(el=>{
+    el.ondragstart=e=>{
+      const p={id:el.dataset.calid, kind:el.dataset.calkind, start:el.dataset.calstart, g:el.dataset.calg==="1"};
+      e.dataTransfer.setData("text/plain", JSON.stringify(p));
+      state._drag=p;
+    };
+  });
+  document.querySelectorAll(".cal-cell[data-day]").forEach(cell=>{
+    cell.ondragover=e=>{
+      e.preventDefault();
+      if(state.calMode==="week" && (cell.dataset.shab==="1"||cell.dataset.sun==="1")){
+        if(!hold) hold=setTimeout(()=>{
+          state.calMonth=state.calMonth||new Date();
+          state.calMonth.setDate(state.calMonth.getDate()+(cell.dataset.shab==="1"?7:-7));
+          state._gcalKey="";
+          render();
+        },800);
+      }else if(hold){ clearTimeout(hold); hold=null; }
+    };
+    cell.ondragleave=()=>{ if(hold){ clearTimeout(hold); hold=null; } };
+    cell.ondrop=e=>{
+      e.preventDefault();
+      if(hold){ clearTimeout(hold); hold=null; }
+      let p=state._drag;
+      try{ p=JSON.parse(e.dataTransfer.getData("text/plain")||"null")||p; }catch(err){}
+      if(!p||!cell.dataset.day) return;
+      if(fmtDay(p.start)===cell.dataset.day) return;
+      (async()=>{
+        if(!await ask("להחליף מיקום? מ-"+fmtDay(p.start)+" ל-"+cell.dataset.day+"?","החלף","ביטול")) return;
+        applyCalMove(p, cell.dataset.day);
+        state._gcalKey="";
+        render();
+      })();
+    };
+    cell.onclick=()=>openDayView(cell.dataset.day);
+  });
+}
+function packFromDs(ds){
+  return {id:ds.calid, kind:ds.calkind, start:ds.calstart, g:ds.calg==="1", name:ds.calname||"", note:ds.calnote||""};
+}
+function cardDates(r, kind){
+  const field=kind==="m"?"measure":"install";
+  const ekey=kind==="m"?"measureEid":"installEid";
+  const out=[];
+  if(r[field]) out.push({start:r[field], eid:r[ekey]||"", kind});
+  (r.extraDates||[]).forEach(x=>{
+    const k=x.kind==="measure"||x.kind==="m"?"m":(x.kind==="install"||x.kind==="i"?"i":"");
+    if(k===kind && x.start && x.start!==r[field]) out.push({start:x.start, eid:x.eid||"", kind});
+  });
+  return out;
+}
+function unlinkEventFromCards(p){
+  const same=s=>s && (s===p.start || String(s)===String(p.start));
+  let hit=null;
+  state.rows.forEach(r=>{
+    const drop=kind=>{
+      const field=kind==="m"?"measure":"install";
+      const ekey=kind==="m"?"measureEid":"installEid";
+      let ch=false;
+      if((p.id && r[ekey]===p.id) || same(r[field])){
+        r[field]=""; r[ekey]="";
+        if(kind==="m") r.noteM=""; else r.noteI="";
+        ch=true;
+      }
+      const n0=(r.extraDates||[]).length;
+      r.extraDates=(r.extraDates||[]).filter(x=>{
+        const k=x.kind==="measure"||x.kind==="m"?"m":"i";
+        if(k!==kind) return true;
+        if(p.id && x.eid===p.id) return false;
+        if(same(x.start)) return false;
+        return true;
+      });
+      if(ch && !r[field]){
+        const nxt=(r.extraDates||[]).find(x=>(x.kind==="measure"||x.kind==="m"? "m":"i")===kind);
+        if(nxt){
+          r[field]=nxt.start; r[ekey]=nxt.eid||"";
+          r.extraDates=r.extraDates.filter(x=>x!==nxt);
+        }
+      }
+      if(ch || (r.extraDates||[]).length!==n0) hit=r;
+    };
+    if(p.kind!=="i") drop("m");
+    if(p.kind!=="m") drop("i");
+  });
+  return hit;
+}
+function dateChip(r, kind){
+  const list=cardDates(r, kind);
+  if(!list.length) return `<span class="muted">—</span>`;
+  const extra=kind==="m"?"background:#c6f5d6;color:#146c3a":"background:#ffd0a8;color:#9a3b00";
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px">${list.map(x=>
+    `<button type="button" class="badge" data-opendate="${kind}" data-openstart="${esc(x.start)}" data-openeid="${esc(x.eid||"")}" style="${extra};cursor:pointer;border:0;font:inherit">${esc(x.start)}</button>`
+  ).join("")}</div>`;
+}
+function openCardEvent(r, kind, start, eid){
+  const stamp=start||(kind==="m"?r.measure:r.install);
+  const id=eid||(kind==="m"?r.measureEid:r.installEid);
+  if(!stamp) return toast("אין תאריך");
+  const ev=(state.gcal||[]).find(e=>id && e.id===id) ||
+    (state.gcal||[]).find(e=>fmtDay(e.start)===fmtDay(stamp) && evKind(e)===(kind==="m"?"m":"i") && String(e.title||e.name||"").indexOf(r.name)>=0);
+  state._backCard=r.id;
+  openEventEdit({
+    calid: (ev&&ev.id)||id||"",
+    calkind: kind==="m"?"m":"i",
+    calstart: (ev&&ev.start)||stamp,
+    calg: "1",
+    calname: (ev&&(ev.title||ev.name))||r.name,
+    calnote: (ev&&ev.note)||""
+  });
+}
+async function askDeleteCal(ds){
+  const p=packFromDs(ds);
+  if(!await ask("למחוק את האירוע «"+(p.name||p.start)+"»?","מחק","ביטול")) return;
+  toast("מוחק…");
+  state.hideCal=state.hideCal||{};
+  if(p.id) state.hideCal[p.id]=1;
+  state.hideCal[(p.start||"")+"|"+(p.name||"")]=1;
+  if(p.id){
+    try{ await runGS("apiCalDelete",{eventId:p.id}); }catch(e){}
+  }
+  state.gcal=(state.gcal||[]).filter(x=>x.id!==p.id);
+  const hit=unlinkEventFromCards(p);
+  await saveLocal();
+  toast("נמחק");
+  if(hit) openCard(hit.id);
+  else { document.getElementById("ov").classList.remove("show"); render(); }
+}
+function eventBody(r, kind, note, glue){
+  const type=(kind==="m"||kind==="measure")?"מדידה":"התקנה";
+  const lines=[
+    r.name||"",
+    type,
+    note||"",
+    r.phone?("טלפון: "+r.phone):""
+  ];
+  if(r.phone2){
+    lines.push("טלפון קשר: "+r.phone2);
+    if(r.contact) lines.push("איש קשר: "+r.contact);
+  }
+  if(r.address) lines.push("כתובת: "+r.address);
+  if(r.floor) lines.push("קומה: "+r.floor);
+  if(r.apt) lines.push("דירה: "+r.apt);
+  return lines.filter(Boolean).join(" · ");
+}
+function eventLocation(r){
+  return String(r.address||"").trim();
+}
+function openEventEdit(ds){
+  const p=packFromDs(ds);
+  const tm=(String(p.start).match(/(\d{1,2}:\d{2})/)||["","09:00"])[1];
+  document.getElementById("ov").classList.add("show"); fitKb();
+  document.getElementById("md").innerHTML=`<div class="card-head">
+      <div><h2>עריכת אירוע</h2><div class="muted">${esc(fmtDay(p.start))}</div></div>
+      <div class="card-actions">
+        <button class="btn" type="button" id="evSave">שמירה</button>
+        <button class="btn ghost" type="button" id="closeCard">סגירה</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <label>כותרת / הערה — אותו טקסט</label>
+      <textarea id="evNote" style="min-height:160px;max-height:none;height:auto;overflow:hidden;resize:none">${esc(p.note||p.name||"")}</textarea>
+      <input id="evTitle" type="hidden" value="${esc(p.note||p.name||"")}">
+      <label>שעה</label><select id="evHour">${hoursList().map(h=>`<option ${h===tm?"selected":""}>${h}</option>`).join("")}</select>
+      <button class="btn ghost" type="button" id="evDel" style="margin-top:14px;background:#fee2e2;color:#991b1b;border-color:#fca5a5">מחק אירוע</button>
+    </div>`;
+  const ta=document.getElementById("evNote");
+  const fitTa=()=>{ta.style.height="auto"; ta.style.height=Math.max(120,ta.scrollHeight)+"px";};
+  fitTa(); ta.addEventListener("input",fitTa);
+  document.getElementById("closeCard").onclick=()=>{
+    const back=state._backCard; state._backCard="";
+    if(back) openCard(back);
+    else document.getElementById("ov").classList.remove("show");
+  };
+  document.getElementById("evDel").onclick=()=>askDeleteCal({calid:p.id,calkind:p.kind,calstart:p.start,calg:p.g?"1":"",calname:p.name});
+  document.getElementById("evSave").onclick=async()=>{
+    const note=val("evNote");
+    const title=note;
+    const hour=val("evHour");
+    const stamp=fmtDay(p.start)+" "+hour;
+    const row=state.rows.find(x=>x.id===p.id)||rowByEvName(p.name);
+    const loc=row?eventLocation(row):"";
+    if(p.g){
+      try{ await runGS("apiCalUpsert",{eventId:p.id, kind:p.kind==="i"?"install":"measure", title, start:stamp, note:title, address:loc}); }catch(e){}
+      (state.gcal||[]).forEach(x=>{ if(x.id===p.id){ x.title=title; x.start=stamp; x.note=note; }});
+    }else{
+      const r=state.rows.find(x=>x.id===p.id);
+      if(r){
+        if(p.kind==="m" && (r.measure===p.start||fmtDay(r.measure)===fmtDay(p.start))){ r.measure=stamp; r.noteM=note; }
+        else if(p.kind==="i" && (r.install===p.start||fmtDay(r.install)===fmtDay(p.start))){ r.install=stamp; r.noteI=note; }
+        else (r.extraDates||[]).forEach(x=>{ if(x.start===p.start){ x.start=stamp; x.note=note; }});
+        await saveLocal();
+      }
+    }
+    if(row){
+      if(p.kind==="m"||p.kind==="measure") row.measure=stamp;
+      if(p.kind==="i"||p.kind==="install") row.install=stamp;
+      await saveLocal();
+    }
+    state._gcalKey="";
+    const back=state._backCard; state._backCard="";
+    toast("נשמר");
+    if(back) openCard(back);
+    else { document.getElementById("ov").classList.remove("show"); render(); }
+  };
+}
+function openDayView(day){
+  const hourOf=s=>{
+    const raw=String(s||"");
+    const t=raw.match(/T(\d{1,2}):(\d{2})/)||raw.match(/\s(\d{1,2}):(\d{2})/)||raw.match(/(\d{1,2}):(\d{2})\s*$/);
+    if(!t) return "00:00";
+    return String(t[1]).padStart(2,"0")+":"+t[2];
+  };
+  const iso=String(day).split("/").reverse().join("-");
+  const list=calEvents().filter(e=>{
+    const st=String(e.start||"");
+    return fmtDay(st)===fmtDay(day) || (iso.length===10 && st.indexOf(iso)>=0);
+  });
+  const hourSet={};
+  hoursList().forEach(h=>hourSet[h]=1);
+  list.forEach(e=>{hourSet[hourOf(e.start)]=1});
+  const hours=Object.keys(hourSet).sort();
+  const evHtml=e=>`<div class="cal-ev ${evKind(e)}" draggable="true" data-caled="1" data-calid="${esc(e.id||"")}" data-calkind="${evKind(e)}" data-calstart="${esc(e.start||"")}" data-calg="${e.g?"1":""}" data-calname="${esc(e.name||"")}" data-calnote="${esc(e.note||"")}">${esc(shortEvName(e))}</div>`;
+  document.getElementById("ov").classList.add("show"); fitKb();
+  document.getElementById("md").innerHTML=`<div class="card-head">
+      <div><h2>${esc(fmtDay(day))}</h2><div class="muted">${list.length} אירועים · גרור לשעה אחרת</div></div>
+      <div class="card-actions"><button class="btn ghost" id="closeCard">סגירה</button></div>
+    </div>
+    <div class="card-body">${hours.map(h=>{
+      const here=list.filter(e=>hourOf(e.start)===h);
+      return `<div class="day-slot" data-hour="${h}"><b class="day-h">${h}</b><div class="day-evs">${here.map(evHtml).join("")||""}</div></div>`;
+    }).join("")}</div>`;
+  document.getElementById("closeCard").onclick=()=>{document.getElementById("ov").classList.remove("show"); render();};
+  const clearPh=()=>document.querySelectorAll("#md .cal-drop").forEach(x=>x.remove());
+  document.querySelectorAll("#md .cal-ev").forEach(el=>{
+    el.style.cursor="grab";
+    el.ondragstart=e=>{
+      el.classList.add("ghost");
+      state._drag={id:el.dataset.calid, kind:el.dataset.calkind, start:el.dataset.calstart, g:el.dataset.calg==="1", name:el.dataset.calname};
+      e.dataTransfer.setData("text/plain", JSON.stringify(state._drag));
+      e.dataTransfer.effectAllowed="move";
+    };
+    el.ondragend=()=>{ el.classList.remove("ghost"); clearPh(); };
+  });
+  document.querySelectorAll("#md [data-hour]").forEach(box=>{
+    box.ondragover=e=>{
+      e.preventDefault();
+      clearPh();
+      const ph=document.createElement("div");
+      ph.className="cal-drop";
+      box.appendChild(ph);
+    };
+    box.ondragleave=e=>{ if(!box.contains(e.relatedTarget)) clearPh(); };
+    box.ondrop=e=>{
+      e.preventDefault();
+      clearPh();
+      let p=state._drag;
+      try{ p=JSON.parse(e.dataTransfer.getData("text/plain")||"null")||p; }catch(err){}
+      const nh=box.dataset.hour;
+      if(!p||hourOf(p.start)===nh) return;
+      (async()=>{
+        if(!await ask("להחליף שעה? מ-"+hourOf(p.start)+" ל-"+nh+"?","החלף","ביטול")) return;
+        applyCalMove(p, day.replace(/ .*/,""), nh);
+        openDayView(day);
+      })();
+    };
+  });
+}
+function mondayOfSun(d){
+  const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  x.setDate(x.getDate()-x.getDay());
+  return x;
+}
+function shortEvName(e){
+  const raw=String((e&&(e.name||e.title||e.note))||"").replace(/\s+/g," ").trim();
+  const row=rowByEvName(raw);
+  const type=evKind(e)==="i"?"התקנה":"מדידה";
+  let nm=row&&row.name?row.name:"";
+  if(!nm){
+    const first=raw.split(/\n| · | - /)[0].trim();
+    nm=first.replace(/^(מדידה|התקנה)\s*/,"")||first;
+  }
+  const phone=row&&row.phone?row.phone:(raw.match(/0\d[\d\- ]{7,}/)||[])[0]||"";
+  const note=(row&&(evKind(e)==="i"?row.noteI:row.noteM))||"";
+  const bits=[nm, type];
+  if(note) bits.push(note);
+  if(phone) bits.push(phone);
+  return bits.filter(Boolean).join(" · ");
+}
+function rowByEvName(name){
+  const n=String(name||"").replace(/\s+/g," ").trim();
+  if(!n) return null;
+  return state.rows.find(r=>r.name&&(n===r.name||n.indexOf(r.name)>=0||r.name.indexOf(n)>=0))||null;
+}
+function evLine(e){
+  const row=state.rows.find(x=>x.id===e.id)||rowByEvName(e.name);
+  const pid=row?row.id:"";
+  const tm=(String(e.start).match(/(\d{1,2}:\d{2})/)||[""])[0]||"";
+  return `<div class="cal-ev i" data-prodid="${pid}" style="cursor:pointer">${esc(tm)} ${esc((row&&row.name)||shortEvName(e))}</div>`;
+}
+function prodSunday(){
+  const d=state.prodWeek instanceof Date?state.prodWeek:new Date();
+  const x=new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate()-x.getDay());
+  state.prodWeek=x;
+  return x;
+}
+function shiftProd(dir){
+  const now=Date.now();
+  if(now-(state._prodLock||0)<800) return;
+  state._prodLock=now;
+  const s=prodSunday();
+  state.prodWeek=new Date(s.getFullYear(), s.getMonth(), s.getDate()+dir*7);
+  state._gcalKey="";
+  render();
+}
+function renderProd(){
+  const mon=prodSunday();
+  const wd=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
+  const ev=calEvents().filter(e=>e.kind==="i");
+  const bar=`<div class="toolbar" style="flex-wrap:nowrap">
+      <button type="button" class="btn ghost" id="prodPrev">‹</button>
+      <b style="flex:1;text-align:center">${esc(fmtDay(mon))} – ${esc(fmtDay(new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+6)))}</b>
+      <button type="button" class="btn ghost" id="prodNext">›</button>
+      <span class="badge" style="background:#ffd0a8;color:#9a3b00">התקנות</span>
+    </div>`;
+  if(window.innerWidth<=800){
+    let list="";
+    for(let i=0;i<7;i++){
+      const d=new Date(mon); d.setDate(mon.getDate()+i);
+      const key=fmtDay(d);
+      const here=ev.filter(e=>fmtDay(e.start)===key);
+      if(!here.length) continue;
+      list+=`<div class="prod-day"><b>${wd[i]} · ${key}</b>${here.map(evLine).join("")}</div>`;
+    }
+    return `<div class="cal-wrap" style="overflow:auto">${bar}${list||`<div class="card">אין התקנות בשבוע זה</div>`}</div>`;
+  }
+  let cells="";
+  for(let i=0;i<7;i++){
+    const d=new Date(mon); d.setDate(mon.getDate()+i);
+    const key=fmtDay(d);
+    const here=ev.filter(e=>fmtDay(e.start)===key);
+    cells+=`<div class="cal-cell week"><b>${wd[i]} ${key}</b>${here.map(evLine).join("")}</div>`;
+  }
+  return `<div class="cal-wrap">${bar}<div class="cal-grid cal-week">${cells}</div></div>`;
+}
+function instOwnEvents(){
+  const w=state.worker||"";
+  const today=fmtDay(new Date());
+  const out=[];
+  state.rows.forEach(r=>{
+    const push=(kind,start)=>{
+      if(!start) return;
+      const who=kind==="m"?r.whoMeasure:r.whoInstall;
+      if(w && who && who!==w) return;
+      if(w && !who) return;
+      if(fmtDay(start)<today) return;
+      out.push({kind,start,r});
+    };
+    push("m",r.measure); push("i",r.install);
+    (r.extraDates||[]).forEach(x=>push(x.kind==="install"||x.kind==="i"?"i":"m", x.start));
+  });
+  out.sort((a,b)=>fmtDay(a.start).split("/").reverse().join("")>fmtDay(b.start).split("/").reverse().join("")?1:-1);
+  return out;
+}
+function renderInst(){
+  const ev=instOwnEvents();
+  const by={};
+  ev.forEach(e=>{(by[fmtDay(e.start)]=by[fmtDay(e.start)]||[]).push(e)});
+  const days=Object.keys(by);
+  if(!days.length) return `<div class="card">אין אירועים משויכים אליך מהיום והלאה.</div>`;
+  return days.map(d=>`<div class="muted" style="font-weight:800;margin:12px 0 4px">${d}</div>`+by[d].map(e=>`<div class="card" data-instid="${e.r.id}" data-instkind="${e.kind}">
+      <b>${esc(e.r.name)}</b>
+      <div class="muted">${e.kind==="m"?"מדידה":"התקנה"} · ${esc(e.start)}</div>
+    </div>`).join("")).join("");
+}
+function renderLogin(){
+  const opts=(state.installers||[]).map((p,i)=>`<option value="${i}">${esc(nameOf(p))}${p.email?" · "+esc(p.email):""}</option>`).join("");
+  return `<div class="card"><b>כניסה לפי תפקיד</b>
+    <p class="muted">משרד רואה הכל. מתקין נכנס בשם שלו. ייצור — יומן התקנות.</p>
+    <label>תפקיד</label>
+    <select id="roleSel"><option value="office">משרד</option><option value="installer">מתקין</option><option value="prod">ייצור</option></select>
+    <div id="instPick" style="display:none">
+      <label>מתקין</label>
+      <select id="instSel">${opts||"<option value=''>אין מתקינים בהגדרות</option>"}</select>
+    </div>
+    <label>קוד</label><input id="rolePin" placeholder="PIN" type="password">
+    <div style="margin-top:12px"><button class="btn" id="goRole">כניסה</button></div>
+    <p class="muted">משרד 0000 · ייצור 2222. מתקין — הקוד האישי מההגדרות.</p>
+  </div>`;
+}
+function nameOf(x){return typeof x==="string"?x:(x&&(x.name||x.email||x.id)||"")}
+function renderPeople(list, kind){
+  const arr=list||[];
+  if(!arr.length) return `<div class="muted">אין</div>`;
+  return arr.map((a,i)=>`<span class="chip">${esc(nameOf(a))} <button type="button" data-rm="${kind}" data-i="${i}" style="border:0;background:none;cursor:pointer;font-weight:800">×</button></span>`).join(" ");
+}
+function renderSet(){
+  const s=state.settings||{};
+  return `<div class="card"><b>מסד Drive</b>
+    <p class="muted">${state.rows.length} לקוחות · corianchic-db.json. Sheet לא בשימוש.</p>
+    <button class="btn ghost" id="reimport">טען שוב מ-Drive</button>
+  </div>
+  <div class="card"><b>סיסמת מנהל</b>
+    <label>קוד כניסה למשרד</label><input id="p_off" type="password" value="${esc(state.roles.officePin)}">
+    <p class="muted">רק סיסמת המנהל. מתקין וייצור לא משתנים מכאן.</p>
+  </div>
+  <div class="card"><b>תיקיות Google Drive</b>
+    <label>פעילים (Active)</label><input id="s_active" value="${esc(s.folderActive||s.folderClients||"")}">
+    <label>Finish (גמר)</label><input id="s_finish" value="${esc(s.folderFinish||"")}">
+    <p class="muted">בסטטוס גמר התיקייה עוברת ל-Finish.</p>
+    <label>תיקיית Active במחשב (Windows)</label>
+    <div class="muted" id="localActiveLab">${esc(state.localActiveName||"לא נבחרה")}</div>
+    <button class="btn ghost" type="button" id="pickLocalActive" style="margin-top:8px">בחר תיקייה במחשב</button>
+    <p class="muted">פעם אחת. אחר כך נפתח חלון הקבצים כבר בתיקיית הלקוח. רק PDF ותמונות.</p>
+    <p class="muted">Windows WhatsApp: התקן פעם אחת INSTALL.bat מתוך CORIANCHIC-Share. שלח עותק מוריד קבצים ומפעיל את המתווך.</p>
+  </div>
+  <div class="card"><b>יומן Google</b>
+    <label>מזהה יומן החברה</label><input id="s_cal" value="${esc(s.calMeasure||s.calInstall||s.calendarId||"")}">
+    <p class="muted">יומן אחד. מדידה ירוק, התקנה כתום.</p>
+  </div>
+  <div class="card"><b>כלל התקנה</b>
+    <label>ימים מ-CAM או ייצור עד התקנה</label>
+    <input id="s_ndays" type="number" min="1" value="${esc(s.installPlusDays||s.nDays||"10")}">
+  </div>
+  <div class="card"><b>סוכנים</b>
+    <div id="listAgents">${renderPeople(state.agents,"ag")}</div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="newAgent" placeholder="שם סוכן" style="flex:1">
+      <button class="btn" type="button" id="addAgent">+</button>
+    </div>
+  </div>
+  <div class="card"><b>מתקינים</b>
+    <div>${(state.installers||[]).length?state.installers.map((p,i)=>{
+      const x=asInst(p);
+      return `<div class="card" style="margin:6px 0"><b>${esc(x.name||"—")}</b>
+        <div class="muted">${esc(x.email||"בלי אימייל")} · קוד: ${x.pin?"••••":"אין"}</div>
+        <button type="button" class="btn ghost" data-rm="ins" data-i="${i}" style="margin-top:6px">מחק</button></div>`;
+    }).join(""):`<div class="muted">אין מתקינים</div>`}</div>
+    <label>שם</label><input id="newInstName" placeholder="שם המתקין">
+    <label>אימייל</label><input id="newInstMail" placeholder="email">
+    <label>קוד אישי</label><input id="newInstPin" type="password" placeholder="PIN">
+    <button class="btn" type="button" id="addInst" style="margin-top:8px">הוסף מתקין</button>
+  </div>
+  <div class="card"><b>ייצור</b>
+    <div id="listProd">${renderPeople(state.production,"prd")}</div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="newProd" placeholder="שם" style="flex:1">
+      <button class="btn" type="button" id="addProd">+</button>
+    </div>
+  </div>
+  <button class="btn" id="saveSet" style="width:100%;margin:8px 0 24px">שמור הגדרות</button>`;
+}
+
+function svgPhone(){return `<svg viewBox="0 0 24 24" fill="none" stroke="#145c3a" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6.4 6.4l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"/></svg>`}
+function svgPin(){return `<svg viewBox="0 0 24 24"><path fill="#145c3a" d="M12 2c3.3 0 6 2.6 6 5.8 0 4.4-6 11.2-6 11.2S6 12.2 6 7.8C6 4.6 8.7 2 12 2zm0 3.2A2.6 2.6 0 1 0 12 10.4 2.6 2.6 0 0 0 12 5.2z"/></svg>`}
+function svgFold(){return `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#145c3a" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`}
+function svgCam(){return `<svg viewBox="0 0 24 24" fill="none" stroke="#145c3a" stroke-width="2"><path d="M4 8h3l2-2h6l2 2h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/><circle cx="12" cy="14" r="3"/></svg>`}
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+
+function openCardRO(r, kind){
+  const tels=[r.phone,r.phone2].filter(Boolean);
+  const job=kind|| (r.status==="מדידה"?"m":"i");
+  document.getElementById("ov").classList.add("show"); fitKb();
+  document.getElementById("md").innerHTML=`<div class="card-head">
+      <div><h2>${esc(r.name)}</h2><div class="addr-line">${esc(r.address||"")}${r.floor||r.apt?`<br>${esc([r.floor&&("קומה "+r.floor),r.apt&&("דירה "+r.apt)].filter(Boolean).join(" · "))}`:""}</div></div>
+      <div class="card-actions"><button class="btn ghost" id="closeCard">סגירה</button></div>
+    </div>
+    <div class="card-body" style="overflow:auto;padding:12px 16px 24px">
+    <div class="addr-line">${r.phone?"טלפון: "+esc(r.phone):""}${r.contact?" · קשר: "+esc(r.contact)+" "+esc(r.phone2||""):""}</div>
+    <div class="acts">
+      <button class="act" type="button" id="aCall">${svgPhone()}<em>התקשר</em></button>
+      <button class="act" type="button" id="aNav">${svgPin()}<em>ניווט</em></button>
+      ${r.folderUrl?`<a class="act" href="${r.folderUrl}" target="_blank">${svgFold()}<em>תיקייה</em></a>`:`<button class="act" type="button">${svgFold()}<em>תיקייה</em></button>`}
+      <button class="act" type="button" id="aCam">${svgCam()}<em>מצלמה</em></button>
+    </div>
+    <input type="file" accept="image/*,video/*" capture="environment" id="photoIn" style="display:none" multiple>
+    <div id="filesMount">${filesBlockHtml([],{loading:true})}</div>
+    ${job==="m"?`<button class="btn" data-done="${r.id}" style="margin-top:14px;width:100%">סיים מדידה</button>`:`<button class="btn" data-instdone="${r.id}" style="margin-top:14px;width:100%">סיים התקנה</button>`}
+    </div>`;
+  document.getElementById("closeCard").onclick=()=>document.getElementById("ov").classList.remove("show");
+  document.getElementById("aCall").onclick=()=>{
+    if(!tels.length) return toast("אין טלפון");
+    if(tels.length===1){ location.href="tel:"+tels[0]; return; }
+    (async()=>{
+      const t=await askPick("למי להתקשר?",tels.map(x=>({label:x,value:x})));
+      if(t) location.href="tel:"+t;
+    })();
+  };
+  document.getElementById("aNav").onclick=()=>{ if(!r.address) return toast("אין כתובת"); location.href=["https:","","waze.com/ul?q="+encodeURIComponent(r.address)].join("/"); };
+  const inp=document.getElementById("photoIn");
+  document.getElementById("aCam").onclick=()=>inp.click();
+  inp.onchange=async()=>{
+    const files=[...inp.files];
+    inp.value="";
+    if(!files.length) return;
+    try{ await enqueueUploads(r, files); }
+    catch(e){ toast("לא נכנס לתור"); }
+  };
+  loadFiles(r).then(files=>{
+    const box=document.getElementById("filesMount");
+    if(!box) return;
+    box.innerHTML=filesBlockHtml(files,{inst:true});
+    fillThumbs(files);
+    bindFileBox(r, files);
+  });
+  document.querySelectorAll("[data-done]").forEach(el=>{
+    el.onclick=async()=>{
+      if(!await ask("לסיים מדידה? הסטטוס יהפוך לשרטוט","כן","לא")) return;
+      r.status="שרטוט"; r.whoMeasure=state.worker||r.whoMeasure||""; r.updated=fmtDT(new Date());
+      await saveLocal(); document.getElementById("ov").classList.remove("show"); render();
+    };
+  });
+  document.querySelectorAll("[data-instdone]").forEach(el=>{
+    el.onclick=async()=>{
+      if(!await ask("לסיים התקנה?","כן","לא")) return;
+      r.status="הותקן/ גבייה"; r.whoInstall=state.worker||r.whoInstall||""; r.updated=fmtDT(new Date());
+      await saveLocal(); document.getElementById("ov").classList.remove("show"); render();
+    };
+  });
+}
+function openProdStrip(r){
+  document.getElementById("ov").classList.add("show"); fitKb();
+  document.getElementById("md").innerHTML=`<div class="card-head" style="padding:12px 16px">
+      <div style="display:flex;align-items:center;gap:8px">${r.folderUrl?`<a class="btn ghost" href="${r.folderUrl}" target="_blank">${svgFold()}</a>`:""}<div><h2>${esc(r.name)}</h2></div></div>
+      <div class="card-actions">
+        ${r.status==="ייצור"?`<button class="btn" id="toReady">מוכן</button>`:""}
+        ${r.status==="מוכן"?`<button class="btn ghost" id="toProd">חזרה לייצור</button>`:""}
+        <button class="btn ghost" id="closeCard">סגירה</button>
+      </div>
+    </div>
+    <div class="card-body prod-gal" style="overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 72px;flex:1"><div id="filesMount">${filesBlockHtml([],{loading:true})}</div></div>`;
+  document.getElementById("closeCard").onclick=()=>document.getElementById("ov").classList.remove("show");
+  const a=document.getElementById("toReady"); if(a) a.onclick=async()=>{ if(!await ask("להעביר למוכן?","כן","לא")) return; r.status="מוכן"; r.updated=fmtDT(new Date()); await saveLocal(); render(); openProdStrip(r); };
+  const b=document.getElementById("toProd"); if(b) b.onclick=async()=>{ if(!await ask("להחזיר לייצור?","כן","לא")) return; r.status="ייצור"; r.updated=fmtDT(new Date()); await saveLocal(); render(); openProdStrip(r); };
+  loadFiles(r).then(files=>{
+    const box=document.getElementById("filesMount");
+    if(!box) return;
+    box.innerHTML=filesBlockHtml(files,{inst:true});
+    fillThumbs(files);
+    bindFileBox(r, files);
+  });
+}
+function openCard(id){
+  const r=state.rows.find(x=>x.id===id); if(!r) return;
+  if(state.role==="prod"){ openProdStrip(r); return; }
+  if(state.role==="installer"){ openCardRO(r); return; }
+  document.getElementById("ov").classList.add("show"); fitKb();
+  document.getElementById("md").innerHTML=`<div class="card-head">
+      <div style="display:flex;align-items:center;gap:8px">
+        ${r.folderUrl?`<a class="btn ghost" href="${r.folderUrl}" target="_blank" title="תיקייה" style="display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:6px">${svgFold()}</a>`:""}
+        <div><h2>${esc(r.name)}</h2><div class="muted">עודכן ${esc(r.updated||"—")}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <select id="f_status" class="sel-badge">${STATUSES.map(s=>`<option ${s===r.status?"selected":""}>${s}</option>`).join("")}</select>
+        <select id="f_pay" class="sel-badge">${["","שולם","שולם חלקי","לא שולם"].map(s=>`<option ${s===r.pay?"selected":""}>${s||"—"}</option>`).join("")}</select>
+      </div>
+      <div class="card-actions">
+        <button class="btn" id="saveCard">שמירה</button>
+        <button class="btn ghost" id="closeCard">סגירה</button>
+      </div>
+    </div>
+    <div class="card-body">
+    <div class="card-split">
+    <div class="card-files" id="filesMount">${filesBlockHtml([], {upload:true, send:true, loading:true})}</div>
+    <div class="card-form">
+    <div class="g3">
+      <div>
+        <label>כתובת</label><input id="f_address" value="${esc(r.address)}">
+        <div class="g2">
+          <div><label>קומה</label><input id="f_floor" value="${esc(r.floor)}"></div>
+          <div><label>דירה</label><input id="f_apt" value="${esc(r.apt)}"></div>
+        </div>
+      </div>
+      <div><label>טלפון</label><input id="f_phone" value="${esc(r.phone)}"></div>
+      <div>
+        <label>שם איש קשר</label><input id="f_contact" value="${esc(r.contact)}">
+        <label>טלפון איש קשר</label><input id="f_phone2" value="${esc(r.phone2)}">
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>הערה</label>
+      <textarea id="f_notes" style="width:100%;min-height:48px;max-height:72px">${esc(r.notes)}</textarea>
+    </div>
+    <div id="projRow" style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+      ${projChips(r)}
+      <button class="btn ghost" type="button" id="addProj">הוסף פרויקט</button>
+    </div>
+    <div class="g2" style="margin-top:8px">
+      <div class="card" style="margin:0">
+        <b>מדידה</b>
+        <div id="mDateBox">${dateChip(r,"m")}</div>
+        <button class="btn" type="button" id="pickM" style="margin-top:8px;width:100%">+ מדידה</button>
+      </div>
+      <div class="card" style="margin:0">
+        <b>התקנה</b>
+        <div id="iDateBox">${dateChip(r,"i")}</div>
+        <button class="btn" type="button" id="pickI" style="margin-top:8px;width:100%">+ התקנה</button>
+      </div>
+    </div>
+    </div>
+    </div>
+    </div>`;
+  document.getElementById("closeCard").onclick=()=>document.getElementById("ov").classList.remove("show");
+  document.getElementById("saveCard").onclick=async()=>{
+    r.phone=val("f_phone"); r.contact=val("f_contact"); r.phone2=val("f_phone2");
+    r.address=val("f_address"); r.floor=val("f_floor"); r.apt=val("f_apt");
+    r.status=val("f_status"); r.pay=val("f_pay")==="—"?"":val("f_pay"); r.notes=val("f_notes");
+    r.updated=fmtDT(new Date());
+    await saveLocal();
+    document.getElementById("ov").classList.remove("show");
+    render(); toast("נשמר במסד המקומי");
+  };
+  const colorStatus=()=>{
+    const el=document.getElementById("f_status"); if(!el) return;
+    const st=el.value;
+    const k=st.startsWith("ממתין")?"ממתין":st.startsWith("הותקן")?"הותקן":st;
+    el.className="sel-badge s-"+k;
+  };
+  const colorPay=()=>{
+    const el=document.getElementById("f_pay"); if(!el) return;
+    const p=el.value;
+    el.className="sel-badge "+(p.includes("חלקי")?"p-חלקי":p.includes("לא")?"p-לא":p.includes("שולם")?"p-שולם":"");
+  };
+  const fs=document.getElementById("f_status"); if(fs){ colorStatus(); fs.onchange=colorStatus; }
+  const fp=document.getElementById("f_pay"); if(fp){ colorPay(); fp.onchange=colorPay; }
+  function grabCard(){
+    const g=id=>{const el=document.getElementById(id); return el?el.value.trim():"";};
+    r.phone=g("f_phone")||r.phone; r.phone2=g("f_phone2")||r.phone2; r.contact=g("f_contact")||r.contact;
+    r.address=g("f_address")||r.address; r.floor=g("f_floor")||r.floor; r.apt=g("f_apt")||r.apt;
+  }
+  const pm=document.getElementById("pickM"); if(pm) pm.onclick=()=>{grabCard(); openPick(r,"m")};
+  const pi=document.getElementById("pickI"); if(pi) pi.onclick=()=>{grabCard(); openPick(r,"i")};
+  document.querySelectorAll("[data-opendate]").forEach(el=>{
+    el.onclick=()=>openCardEvent(r, el.dataset.opendate, el.dataset.openstart, el.dataset.openeid);
+  });
+  const ap=document.getElementById("addProj"); if(ap) ap.onclick=()=>openAddProject(r);
+  bindFiles(r,false);
+  bindDelProj(r);
+  bindProjOpen(r);
+  loadFiles(r).then(files=>{
+    const box=document.getElementById("filesMount");
+    if(!box) return;
+    box.innerHTML=filesBlockHtml(files,{upload:true,send:true});
+    bindFiles(r,false);
+    bindFileBox(r, files);
+    fillThumbs(files);
+  });
+  syncProjects(r).then(()=>{
+    const row=document.getElementById("projRow");
+    if(!row) return;
+    row.innerHTML=projChips(r)+`<button class="btn ghost" type="button" id="addProj">הוסף פרויקט</button>`;
+    const ap2=document.getElementById("addProj"); if(ap2) ap2.onclick=()=>openAddProject(r);
+    bindDelProj(r);
+    bindProjOpen(r);
+    saveLocal();
+  });
+}
+function projChips(r){
+  return (r.projects||[]).map(p=>
+    `<span class="chip" style="display:inline-flex;align-items:center;gap:6px"><button type="button" class="proj-open" data-projurl="${esc(p.url||"")}" data-projname="${esc(p.name)}" style="border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px">${svgFold()} ${esc(p.name)}</button><button type="button" class="btn ghost" data-delproj="1" data-delurl="${esc(p.url||"")}" data-delname="${esc(p.name)}" data-cid="${esc(r.id)}" style="padding:2px 8px;min-width:0">×</button></span>`
+  ).join("");
+}
+function bindDelProj(r){ /* clicks handled globally */ }
+function bindProjOpen(r){
+  document.querySelectorAll(".proj-open").forEach(b=>{
+    b.onclick=()=>openProjectFiles(r, b.dataset.projurl, b.dataset.projname);
+  });
+}
+async function openProjectFiles(r, url, name){
+  const box=document.getElementById("filesMount");
+  if(!box) return;
+  if(!url) return toast("אין תיקיית פרויקט");
+  box.innerHTML=filesBlockHtml([],{send:true, loading:true, title:"פרויקט · "+(name||""), back:true});
+  const files=await loadFiles({folderUrl:url});
+  if(!document.getElementById("filesMount")) return;
+  box.innerHTML=filesBlockHtml(files,{send:true, title:"פרויקט · "+(name||""), back:true});
+  bindFileBox(r, files);
+  fillThumbs(files);
+  const back=document.getElementById("filesBack");
+  if(back) back.onclick=()=>reloadClientFiles(r);
+}
+function reloadClientFiles(r){
+  const box=document.getElementById("filesMount");
+  if(!box) return;
+  box.innerHTML=filesBlockHtml([],{upload:true, send:true, loading:true});
+  bindFiles(r,false);
+  loadFiles(r).then(files=>{
+    if(!document.getElementById("filesMount")) return;
+    box.innerHTML=filesBlockHtml(files,{upload:true, send:true});
+    bindFiles(r,false);
+    bindFileBox(r, files);
+    fillThumbs(files);
+  });
+}
+async function syncProjects(r){
+  if(!r||!r.folderUrl) return;
+  try{
+    const out=await runGS("apiListProjects",{folderUrl:r.folderUrl});
+    if(out&&out.ok) r.projects=out.folders||[];
+    else if(out&&out.error==="missing"){ r.folderUrl=""; r.projects=[]; }
+  }catch(e){}
+}
+function openAddProject(r){
+  document.getElementById("md").innerHTML=`<div class="card-head">
+      <div><h2>פרויקט חדש</h2><div class="muted">${esc(r.name)}</div></div>
+      <div class="card-actions">
+        <button class="btn" type="button" id="projSave">שמירה</button>
+        <button class="btn ghost" type="button" id="projBack">חזרה</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <label>שם הפרויקט</label>
+      <input id="projName" placeholder="שם התיקייה">
+    </div>`;
+  document.getElementById("projBack").onclick=()=>openCard(r.id);
+  document.getElementById("projSave").onclick=async()=>{
+    const name=val("projName");
+    if(!name) return toast("שם חובה");
+    toast("יוצר תיקייה…");
+    try{
+      const out=await runGS("apiCreateProject",{project:name, folderUrl:r.folderUrl||"", clientName:r.name});
+      if(!out||!out.ok) throw new Error((out&&out.error)||"drive");
+      if(out.parentUrl) r.folderUrl=out.parentUrl;
+      r.projects=asProjects(r.projects);
+      r.projects.push({name, url:out.folderUrl||""});
+      r.updated=fmtDT(new Date());
+      await saveLocal();
+      toast("תיקיית הפרויקט נוצרה");
+      openCard(r.id);
+    }catch(e){
+      toast("שמור שם. תיקייה ב-Drive אחרי New version בסקריפט");
+      r.projects=asProjects(r.projects);
+      r.projects.push({name,url:""});
+      await saveLocal();
+      openCard(r.id);
+    }
+  };
+}
+function hoursList(){
+  const a=[];
+  for(let h=8;h<=18;h++) a.push(String(h).padStart(2,"0")+":00");
+  return a;
+}
+function openPick(r, kind, isNew){
+  const now=new Date();
+  let y=now.getFullYear(), m=now.getMonth();
+  const paint=()=>{
+    const dim=new Date(y,m+1,0).getDate();
+    const first=new Date(y,m,1).getDay();
+    const wd=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"].map(w=>`<div class="cal-wd">${w}</div>`).join("");
+    let days="";
+    for(let i=0;i<first;i++) days+=`<div></div>`;
+    for(let d=1;d<=dim;d++) days+=`<button class="chip" type="button" data-d="${d}" style="margin:0;padding:8px 0;width:100%;text-align:center">${d}</button>`;
+    const cells=first+dim;
+    for(let i=cells;i<42;i++) days+=`<div></div>`;
+    const title=new Date(y,m,1).toLocaleDateString("he-IL",{month:"long",year:"numeric"});
+    const hours=hoursList().map(h=>`<button class="chip" type="button" data-h="${h}">${h}</button>`).join("");
+    document.getElementById("md").innerHTML=`<div class="card-head">
+        <div><h2>${kind==="m"?"מדידה":"התקנה"}</h2><div class="muted">${esc(r.name)}</div></div>
+        <div class="card-actions">
+          <button class="btn" id="pOk" type="button">קבע תאריך</button>
+          <button class="btn ghost" id="pBack" type="button">חזרה</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:14px 16px 32px">
+      <div class="toolbar"><span class="chip" id="pPrev">‹</span><b>${esc(title)}</b><span class="chip" id="pNext">›</span></div>
+      <div class="cal-wd-row" style="margin-top:6px">${wd}</div>
+      <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:4px 0" id="pDays">${days}</div>
+      <label>שעה</label>
+      <div id="pHours" style="display:flex;flex-wrap:wrap;gap:6px">${hours}</div>
+      <label>מתקין</label>
+      <select id="pWho">${instOptions("")}</select>
+      <label>הערה ליומן</label>
+      <input id="pNote" value="">
+      <p class="muted">מדידה ירוק, התקנה כתום.</p>
+      </div>`;
+    let day=now.getDate(), hour="09:00";
+    document.getElementById("pPrev").onclick=()=>{m--; if(m<0){m=11;y--;} paint()};
+    document.getElementById("pNext").onclick=()=>{m++; if(m>11){m=0;y++;} paint()};
+    document.getElementById("pDays").onclick=e=>{
+      const b=e.target.closest("[data-d]"); if(!b) return;
+      day=+b.dataset.d;
+      document.querySelectorAll("#pDays .chip").forEach(x=>x.classList.toggle("on",x===b));
+    };
+    document.getElementById("pHours").onclick=e=>{
+      const b=e.target.closest("[data-h]"); if(!b) return;
+      hour=b.dataset.h;
+      document.querySelectorAll("#pHours .chip").forEach(x=>x.classList.toggle("on",x===b));
+    };
+    document.getElementById("pBack").onclick=()=>isNew?openNew(r):openCard(r.id);
+    document.getElementById("pOk").onclick=()=>applyPick(r,kind,y,m,day,hour,val("pNote"),isNew);
+  };
+  paint();
+}
+async function applyPick(r,kind,y,m,day,hour,note,isNew){
+  const g=id=>{const el=document.getElementById(id); return el?el.value.trim():"";};
+  r.phone=g("f_phone")||r.phone; r.phone2=g("f_phone2")||r.phone2; r.contact=g("f_contact")||r.contact;
+  r.address=g("f_address")||r.address; r.floor=g("f_floor")||r.floor; r.apt=g("f_apt")||r.apt;
+  const stamp=String(day).padStart(2,"0")+"/"+String(m+1).padStart(2,"0")+"/"+y+" "+hour;
+  const field=kind==="m"?"measure":"install";
+  const noteF=kind==="m"?"noteM":"noteI";
+  r[noteF]="";
+  const whoEl=document.getElementById("pWho");
+  const who=whoEl?whoEl.value.trim():"";
+  r.updated=fmtDT(new Date());
+  const pack=Object.assign({},r,{whoMeasure:who,whoInstall:who});
+  const text=eventBody(pack, kind, note);
+  const loc=eventLocation(r);
+  try{
+    const out=await runGS("apiCalUpsert",{
+      kind:field, title:text, start:stamp, address:r.address||"",
+      note:text, name:r.name||"", phone:r.phone||"", phone2:r.phone2||"",
+      contact:r.contact||"", floor:r.floor||"", apt:r.apt||"",
+      anno:note||"", forceNew:true,
+      calId:state.settings.calMeasure||state.settings.calendarId||""
+    });
+    const eid=out&&out.eventId||"";
+    if(r[field] && r[field]!==stamp){
+      r.extraDates=r.extraDates||[];
+      r.extraDates.push({kind:field,start:r[field],eid:kind==="m"?r.measureEid:r.installEid,note:""});
+    }
+    if(r[field]===stamp){
+      r.extraDates=r.extraDates||[];
+      r.extraDates.push({kind:field,start:stamp,eid,note:""});
+    }else{
+      r[field]=stamp;
+      if(kind==="m") r.measureEid=eid; else r.installEid=eid;
+    }
+    if(kind==="m") r.whoMeasure=""; else r.whoInstall="";
+    if(!eid) toast("יומן: "+((out&&out.error)||"לא נשמר"));
+  }catch(e){
+    r[field]=stamp;
+    toast("שגיאת יומן: "+(e&&e.message||e));
+  }
+  if(!isNew) await saveLocal();
+  if(isNew) openNew(r); else openCard(r.id);
+  toast((kind==="m"?"מדידה ":"התקנה ")+stamp);
+}
+function val(id){return document.getElementById(id).value.trim()}
+function fileToB64(file){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{const s=String(fr.result||""); const i=s.indexOf(","); res(i>=0?s.slice(i+1):s);};
+    fr.onerror=rej;
+    fr.readAsDataURL(file);
+  });
+}
+function openUpDb(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open("corianchic-upq",1);
+    req.onupgradeneeded=()=>req.result.createObjectStore("q",{keyPath:"id"});
+    req.onsuccess=()=>res(req.result);
+    req.onerror=()=>rej(req.error);
+  });
+}
+function qPut(item){
+  return openUpDb().then(db=>new Promise((res,rej)=>{
+    const t=db.transaction("q","readwrite");
+    t.objectStore("q").put(item);
+    t.oncomplete=()=>res();
+    t.onerror=()=>rej(t.error);
+  }));
+}
+function qAll(){
+  return openUpDb().then(db=>new Promise((res,rej)=>{
+    const req=db.transaction("q","readonly").objectStore("q").getAll();
+    req.onsuccess=()=>res(req.result||[]);
+    req.onerror=()=>rej(req.error);
+  }));
+}
+function qDel(id){
+  return openUpDb().then(db=>new Promise((res,rej)=>{
+    const t=db.transaction("q","readwrite");
+    t.objectStore("q").delete(id);
+    t.oncomplete=()=>res();
+    t.onerror=()=>rej(t.error);
+  }));
+}
+let qBusy=false;
+async function shrinkPic(file){
+  if(!file||!String(file.type||"").startsWith("image/")||file.size<900000) return file;
+  try{
+    const url=URL.createObjectURL(file);
+    const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url;});
+    const max=1600;
+    let w=img.width,h=img.height;
+    if(w>max||h>max){ const s=max/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+    const c=document.createElement("canvas"); c.width=w; c.height=h;
+    c.getContext("2d").drawImage(img,0,0,w,h);
+    URL.revokeObjectURL(url);
+    const blob=await new Promise(res=>c.toBlob(res,"image/jpeg",0.82));
+    if(!blob) return file;
+    return new File([blob], (file.name||"photo").replace(/\.[^.]+$/,"")+".jpg", {type:"image/jpeg"});
+  }catch(e){ return file; }
+}
+async function enqueueUploads(r, files){
+  if(!files||!files.length) return;
+  if(!r.folderUrl){
+    if(!r.name) throw new Error("name");
+    try{
+      const out=await runGS("apiCreateClientFolder",{name:r.name, parent:state.settings.folderActive||state.settings.folderClients||""});
+      if(out&&out.ok) r.folderUrl=out.folderUrl;
+    }catch(e){}
+  }
+  if(!r.folderUrl) throw new Error("folder");
+  let n=0;
+  for(const raw of files){
+    const f=await shrinkPic(raw);
+    await qPut({
+      id:Date.now()+"-"+Math.random().toString(36).slice(2,8),
+      clientId:r.id||"",
+      folderUrl:r.folderUrl,
+      name:f.name||("photo-"+Date.now()+".jpg"),
+      mime:f.type||"image/jpeg",
+      blob:f
+    });
+    n++;
+  }
+  toast("בתור העלאה: "+n);
+  pumpQueue();
+}
+async function pumpQueue(){
+  if(qBusy) return;
+  qBusy=true;
+  try{
+    while(true){
+      const all=await qAll();
+      if(!all.length) break;
+      if(typeof navigator!=="undefined" && navigator.onLine===false){
+        toast("אין רשת · ממתין · "+all.length);
+        break;
+      }
+      const item=all[0];
+      try{
+        const data=await fileToB64(item.blob);
+        const up=await runGS("apiUploadFile",{folderUrl:item.folderUrl, name:item.name, mime:item.mime, data},90000);
+        if(!up||!up.ok) throw new Error((up&&up.error)||"upload");
+        await qDel(item.id);
+        const left=all.length-1;
+        toast(left?("הועלה · נשארו "+left):"הכל הועלה");
+        const row=state.rows.find(x=>x.id===item.clientId);
+        const box=document.getElementById("filesMount");
+        if(box&&row){
+          const files=await loadFiles(row);
+          box.innerHTML=filesBlockHtml(files,{inst:!!document.querySelector(".acts")});
+          bindFileBox(row, files);
+          bindFiles(row,false);
+          fillThumbs(files);
+        }
+      }catch(e){
+        toast("ניסיון חוזר · "+(all.length));
+        await new Promise(ok=>setTimeout(ok,5000));
+        if(typeof navigator!=="undefined" && navigator.onLine===false) break;
+      }
+    }
+  }finally{ qBusy=false; }
+}
+window.addEventListener("online",()=>{ toast("הרשת חזרה"); pumpQueue(); });
+async function uploadPicked(r, files){ return enqueueUploads(r, files); }
+function bindFiles(r, isNew){
+  const btn=document.getElementById("addFiles");
+  const inp=document.getElementById("fileIn");
+  if(!btn||!inp) return;
+  btn.onclick=()=>{
+    if(isNew) grabNew(r);
+    if(!r.name) return toast("שם חובה לפני העלאה");
+    inp.click();
+  };
+  inp.onchange=async()=>{
+    const files=[...inp.files];
+    inp.value="";
+    if(!files.length) return;
+    toast("מעלה "+files.length+" קבצים…");
+    try{
+      await uploadPicked(r, files);
+      if(!isNew) await saveLocal();
+      toast("הועלה לתיקייה");
+    }catch(e){
+      toast("העלאה אחרי New version בסקריפט");
+    }
+  };
+}
+function grabNew(r){
+  r.name=val("n_name"); r.phone=val("f_phone"); r.contact=val("f_contact"); r.phone2=val("f_phone2");
+  r.address=val("f_address"); r.floor=val("f_floor"); r.apt=val("f_apt");
+  r.status=val("f_status")||ORDER; r.pay=val("f_pay")==="—"?"":val("f_pay");
+  r.notes=val("f_notes");
+}
+function openNew(draft){
+  const r=draft&&draft.id?draft:mapRow({id:"n"+Date.now(), status:ORDER, pay:"לא שולם"});
+  document.getElementById("ov").classList.add("show"); fitKb();
+  document.getElementById("md").innerHTML=`<div class="card-head">
+      <div style="display:flex;align-items:center;gap:8px;flex:1">
+        <div style="flex:1"><label>שם לקוח</label><input id="n_name" value="${esc(r.name)}"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <select id="f_status" class="sel-badge">${STATUSES.map(s=>`<option ${s===r.status?"selected":""}>${s}</option>`).join("")}</select>
+        <select id="f_pay" class="sel-badge">${["","שולם","שולם חלקי","לא שולם"].map(s=>`<option ${s===(r.pay||"לא שולם")?"selected":""}>${s||"—"}</option>`).join("")}</select>
+      </div>
+      <div class="card-actions">
+        <button class="btn" id="createC">צור לקוח</button>
+        <button class="btn ghost" id="closeCard">סגירה</button>
+      </div>
+    </div>
+    <div class="card-body">
+    <div class="g3">
+      <div>
+        <label>כתובת</label><input id="f_address" value="${esc(r.address)}">
+        <div class="g2">
+          <div><label>קומה</label><input id="f_floor" value="${esc(r.floor)}"></div>
+          <div><label>דירה</label><input id="f_apt" value="${esc(r.apt)}"></div>
+        </div>
+      </div>
+      <div><label>טלפון</label><input id="f_phone" value="${esc(r.phone)}"></div>
+      <div>
+        <label>שם איש קשר</label><input id="f_contact" value="${esc(r.contact)}">
+        <label>טלפון איש קשר</label><input id="f_phone2" value="${esc(r.phone2)}">
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>הערה</label>
+      <textarea id="f_notes" style="width:100%;min-height:88px">${esc(r.notes)}</textarea>
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn ghost" type="button" id="addFiles">הוסף קבצים</button>
+      <input id="fileIn" type="file" multiple style="display:none">
+      <span class="muted" id="fileHint"></span>
+    </div>
+    <div class="g2" style="margin-top:8px">
+      <div class="card" style="margin:0">
+        <b>מדידה</b>
+        <div id="mDateBox">${dateChip(r,"m")}</div>
+        <button class="btn" type="button" id="pickM" style="margin-top:8px;width:100%">+ מדידה</button>
+      </div>
+      <div class="card" style="margin:0">
+        <b>התקנה</b>
+        <div id="iDateBox">${dateChip(r,"i")}</div>
+        <button class="btn" type="button" id="pickI" style="margin-top:8px;width:100%">+ התקנה</button>
+      </div>
+    </div>
+    </div>`;
+  const colorStatus=()=>{
+    const el=document.getElementById("f_status"); if(!el) return;
+    const st=el.value;
+    const k=st.startsWith("ממתין")?"ממתין":st.startsWith("הותקן")?"הותקן":st;
+    el.className="sel-badge s-"+k;
+  };
+  const colorPay=()=>{
+    const el=document.getElementById("f_pay"); if(!el) return;
+    const p=el.value;
+    el.className="sel-badge "+(p.includes("חלקי")?"p-חלקי":p.includes("לא")?"p-לא":p.includes("שולם")?"p-שולם":"");
+  };
+  const fs=document.getElementById("f_status"); if(fs){ colorStatus(); fs.onchange=colorStatus; }
+  const fp=document.getElementById("f_pay"); if(fp){ colorPay(); fp.onchange=colorPay; }
+  document.getElementById("closeCard").onclick=()=>document.getElementById("ov").classList.remove("show");
+  bindFiles(r,true);
+  document.getElementById("pickM").onclick=()=>{grabNew(r); openPick(r,"m",true)};
+  document.getElementById("pickI").onclick=()=>{grabNew(r); openPick(r,"i",true)};
+  document.getElementById("createC").onclick=async()=>{
+    grabNew(r);
+    if(!r.name) return toast("שם חובה");
+    r.updated=fmtDT(new Date());
+    if(!r.created) r.created=r.updated;
+    if(r.measure && r.status===ORDER) r.status="מדידה";
+    toast("יוצר תיקייה…");
+    try{
+      const out=await runGS("apiCreateClientFolder",{name:r.name, parent:state.settings.folderActive||state.settings.folderClients||""});
+      if(out&&out.ok&&out.folderUrl) r.folderUrl=out.folderUrl;
+    }catch(e){}
+    state.rows.unshift(r); await saveLocal();
+    document.getElementById("ov").classList.remove("show"); render();
+    if(r.folderUrl){ toast("נוצר · תיקייה נפתחת"); window.open(r.folderUrl,"_blank"); }
+    else toast("נוצר. תיקייה — New version + Active בהגדרות");
+  };
+}
+
+let weekLock=0;
+function weekStartOf(d){
+  const x=new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate()-x.getDay());
+  return x;
+}
+function shiftCal(dirWeeks, dirMonths){
+  const now=Date.now();
+  if(now-weekLock<1500) return;
+  weekLock=now;
+  const cur=state.calMonth instanceof Date?state.calMonth:new Date();
+  const start=weekStartOf(cur);
+  if(dirWeeks) state.calMonth=new Date(start.getFullYear(), start.getMonth(), start.getDate()+dirWeeks*7);
+  else {
+    const m=new Date(cur.getFullYear(), cur.getMonth()+(dirMonths||0), 1);
+    state.calMonth=m;
+  }
+  state._gcalKey="";
+  render();
+}
+function bindMain(){
+  const q=document.getElementById("q");
+  if(q) q.oninput=()=>{state.q=q.value; render()};
+  const o=document.getElementById("togOrd"); if(o) o.onclick=()=>{state.showOrders=!state.showOrders; render()};
+  const a=document.getElementById("togArch"); if(a) a.onclick=()=>{state.showArch=!state.showArch; render()};
+  const n=document.getElementById("btnNew"); if(n) n.onclick=openNew;
+  const jump=(el, dw, dm)=>{
+    if(!el) return;
+    el.onclick=null;
+    el.onpointerdown=null;
+    el.ontouchend=null;
+    el.onclick=e=>{ e.preventDefault(); e.stopPropagation(); shiftCal(dw, dm); };
+  };
+  jump(document.getElementById("calPrev"), state.calMode==="week"?-1:0, -1);
+  jump(document.getElementById("calNext"), state.calMode==="week"?1:0, 1);
+  const pp=document.getElementById("prodPrev");
+  if(pp) pp.onclick=e=>{ e.preventDefault(); e.stopPropagation(); shiftProd(-1); };
+  const pn=document.getElementById("prodNext");
+  if(pn) pn.onclick=e=>{ e.preventDefault(); e.stopPropagation(); shiftProd(1); };
+  const cmb=document.getElementById("calMonthBtn");
+  if(cmb) cmb.onclick=()=>{state.calMode="month"; state._gcalKey=""; render();};
+  const cwb=document.getElementById("calWeekBtn");
+  if(cwb) cwb.onclick=()=>{state.calMode="week"; state._gcalKey=""; render();};
+  if(state.view==="cal"){ loadGcal(); bindCal(); }
+  if(state.view==="prod"){ loadGcal(); }
+  const ri=document.getElementById("reimport"); if(ri) ri.onclick=async()=>{await loadDrive(); render()};
+  const pla=document.getElementById("pickLocalActive"); if(pla) pla.onclick=()=>pickLocalActiveFolder();
+  const rs=document.getElementById("roleSel");
+  const ip=document.getElementById("instPick");
+  if(rs&&ip){ ip.style.display=rs.value==="installer"?"block":"none"; rs.onchange=()=>{ip.style.display=rs.value==="installer"?"block":"none"}; }
+  const go=document.getElementById("goRole");
+  if(go) go.onclick=()=>{
+    const role=document.getElementById("roleSel").value;
+    const pin=document.getElementById("rolePin").value.trim();
+    if(role==="office"){
+      if(pin!==String(state.roles.officePin)) return toast("קוד שגוי");
+      state.worker="";
+    }else if(role==="prod"){
+      if(pin!==String(state.roles.prodPin)) return toast("קוד שגוי");
+      state.worker="";
+    }else{
+      const list=state.installers||[];
+      const sel=document.getElementById("instSel");
+      const p=asInst(list[sel?sel.value:0]);
+      if(!p.name) return toast("הוסף מתקין בהגדרות");
+      if(!p.pin || pin!==String(p.pin)) return toast("קוד שגוי");
+      state.worker=p.name;
+      localStorage.setItem("cc_worker",p.name);
+    }
+    state.role=role; localStorage.setItem("cc_role",role);
+    state.view=role==="installer"?"inst":role==="prod"?"prod":"board";
+    render();
+  };
+  const addP=(id,arr)=>{
+    const v=val(id); if(!v) return;
+    arr.push(v); document.getElementById(id).value="";
+    saveLocal().then(()=>render());
+  };
+  const aa=document.getElementById("addAgent"); if(aa) aa.onclick=()=>addP("newAgent",state.agents);
+  const ai=document.getElementById("addInst");
+  if(ai) ai.onclick=()=>{
+    const name=val("newInstName"), email=val("newInstMail"), pin=val("newInstPin");
+    if(!name) return toast("שם חובה");
+    if(!pin) return toast("קוד אישי חובה");
+    state.installers.push({name,email,pin});
+    saveLocal().then(()=>render());
+  };
+  const ap=document.getElementById("addProd"); if(ap) ap.onclick=()=>addP("newProd",state.production);
+  document.querySelectorAll("[data-rm]").forEach(el=>{
+    el.onclick=e=>{
+      e.stopPropagation();
+      const k=el.dataset.rm, i=+el.dataset.i;
+      const bag=k==="ag"?state.agents:k==="ins"?state.installers:state.production;
+      bag.splice(i,1); saveLocal().then(()=>render());
+    };
+  });
+  const ss=document.getElementById("saveSet");
+  if(ss) ss.onclick=async()=>{
+    if(val("p_off")) state.roles.officePin=val("p_off");
+    state.settings=Object.assign({},state.settings,{
+      folderActive:val("s_active"),
+      folderFinish:val("s_finish"),
+      calMeasure:val("s_cal"),
+      calInstall:val("s_cal"),
+      calendarId:val("s_cal"),
+      installPlusDays:val("s_ndays")||"10"
+    });
+    await saveLocal(); toast("ההגדרות נשמרו ל-Drive");
+  };
+  document.querySelectorAll("[data-id]").forEach(el=>{
+    el.addEventListener("click",e=>{if(e.target.closest("a,.act,.btn,.st-nav")) return; openCard(el.dataset.id)});
+  });
+  document.querySelectorAll("[data-prodid]").forEach(el=>{
+    el.onclick=()=>{ const r=state.rows.find(x=>x.id===el.dataset.prodid); if(r) openProdStrip(r); };
+  });
+  document.querySelectorAll("[data-instid]").forEach(el=>{
+    el.onclick=()=>{ const r=state.rows.find(x=>x.id===el.dataset.instid); if(r) openCardRO(r, el.dataset.instkind); };
+  });
+  document.querySelectorAll("[data-stfwd]").forEach(el=>{
+    el.onclick=e=>{ e.stopPropagation(); stepStatus(el.dataset.stfwd, 1); };
+  });
+  document.querySelectorAll("[data-stback]").forEach(el=>{
+    el.onclick=e=>{ e.stopPropagation(); stepStatus(el.dataset.stback, -1); };
+  });
+  document.querySelectorAll("[data-done]").forEach(el=>{
+    el.onclick=async e=>{
+      e.stopPropagation();
+      if(!await ask("לסיים מדידה? הסטטוס יהפוך לשרטוט","כן","לא")) return;
+      const r=state.rows.find(x=>x.id===el.dataset.done);
+      if(r){
+        r.status="שרטוט";
+        r.whoMeasure=state.worker||r.whoMeasure||"";
+        r.updated=fmtDT(new Date());
+        await saveLocal(); render(); toast("עבר לשרטוט"+(r.whoMeasure?" · "+r.whoMeasure:""));
+      }
+    };
+  });
+  document.querySelectorAll("[data-instdone]").forEach(el=>{
+    el.onclick=async e=>{
+      e.stopPropagation();
+      if(!await ask("לסיים התקנה?","כן","לא")) return;
+      const r=state.rows.find(x=>x.id===el.dataset.instdone);
+      if(r){
+        r.status="הותקן/ גבייה";
+        r.whoInstall=state.worker||r.whoInstall||"";
+        r.updated=fmtDT(new Date());
+        await saveLocal(); render(); toast("הותקן"+(r.whoInstall?" · "+r.whoInstall:""));
+      }
+    };
+  });
+}
+
+function render(){
+  if(!state.role){
+    document.getElementById("navd").innerHTML="";
+    document.getElementById("navm").innerHTML="";
+    document.getElementById("sub").textContent="בחירת תפקיד";
+    const tk0=document.getElementById("topKpi"); if(tk0) tk0.innerHTML="";
+    document.getElementById("main").innerHTML=renderLogin();
+    bindMain();
+    return;
+  }
+  nav();
+  const tk=document.getElementById("topKpi");
+  if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
+  const n=state.rows.length;
+  const vis=visible(state.rows).length;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1650`;
+  if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
+  const allowed=viewsForRole().map(v=>v[0]);
+  if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
+  try{ localStorage.setItem("cc_view",state.view); }catch(e){}
+  const main=document.getElementById("main");
+  const phone=window.innerWidth<=800;
+  main.className=(state.view==="board")?"":((state.view==="cal"||(state.view==="prod"&&!phone))?"cal-fill":"scroll-main");
+  try{
+    main.innerHTML = ({board:renderBoard,debt:renderDebt,cal:renderCal,prod:renderProd,inst:renderInst,set:renderSet}[state.view]||renderBoard)();
+  }catch(err){
+    main.innerHTML="<div class='card'><b>שגיאת מסך</b><p class='muted'>"+esc(String(err&&err.message||err))+"</p></div>";
+  }
+  bindMain();
+  pumpQueue();
+}
+
+function fitKb(){
+  const ov=document.getElementById("ov");
+  const md=document.getElementById("md");
+  if(!ov||!md||!ov.classList.contains("show")) return;
+  const vv=window.visualViewport;
+  const h=Math.round((vv&&vv.height)||window.innerHeight);
+  const t=Math.round((vv&&vv.offsetTop)||0);
+  ov.style.top=t+"px";
+  ov.style.height=h+"px";
+  ov.style.bottom="auto";
+  md.style.height=(h-16)+"px";
+  md.style.maxHeight=(h-16)+"px";
+}
+window.addEventListener("resize",fitKb);
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize",fitKb);
+  window.visualViewport.addEventListener("scroll",fitKb);
+}
+document.addEventListener("focusin",e=>{
+  if(!e.target||!e.target.closest("#md")) return;
+  setTimeout(fitKb,50);
+  setTimeout(fitKb,300);
+});
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  const box=document.getElementById("md");
+  if(!box||!e.target||!box.contains(e.target)) return;
+  if(e.target.tagName==="TEXTAREA"||e.target.tagName==="BUTTON"||e.target.tagName==="A") return;
+  e.preventDefault();
+  const list=[...box.querySelectorAll("input,select,textarea,button.btn")].filter(el=>!el.disabled&&el.type!=="hidden"&&el.offsetParent);
+  const i=list.indexOf(e.target);
+  if(i>=0&&i<list.length-1) list[i+1].focus();
+});
+
+render();
+(async()=>{
+  try{
+    const ok=await loadLocal();
+    try{ await loadLocalActive(); }catch(e){}
+    if(ok) render();
+    try{ await loadDrive(); render(); }
+    catch(e){ if(!ok) document.getElementById("sub").textContent="שגיאה: "+e.message; else toast("עובד מהעותק המקומי"); }
+  }catch(e){
+    document.getElementById("sub").textContent="שגיאה: "+e.message;
+  }
+})();
+</script>
+</body>
+</html>
