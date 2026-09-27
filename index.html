@@ -414,7 +414,7 @@ function fetchJsonp(url, ms){
 function runGS(name, arg, ms){
   return new Promise((res,rej)=>{
     if(typeof google!=="undefined" && google.script && google.script.run){
-      const t=setTimeout(()=>rej(new Error("gs-timeout")), ms||20000);
+      const t=setTimeout(()=>rej(new Error("gs-timeout")), ms||((name==="apiUploadFile"||name==="apiGetFile")?90000:20000));
       const r=google.script.run.withSuccessHandler(v=>{clearTimeout(t);res(v)}).withFailureHandler(e=>{clearTimeout(t);rej(e)});
       try{ if(arg===undefined) r[name](); else r[name](arg); }
       catch(err){ clearTimeout(t); rej(err); }
@@ -1859,9 +1859,11 @@ function openCardRO(r, kind){
       <button class="act" type="button" id="aCall">${svgPhone()}<em>התקשר</em></button>
       <button class="act" type="button" id="aNav">${svgPin()}<em>ניווט</em></button>
       ${r.folderUrl?`<a class="act" href="${r.folderUrl}" target="_blank">${svgFold()}<em>תיקייה</em></a>`:`<button class="act" type="button">${svgFold()}<em>תיקייה</em></button>`}
-      <button class="act" type="button" id="aCam">${svgCam()}<em>מצלמה</em></button>
+      <label class="act" style="position:relative;overflow:hidden">
+        ${svgCam()}<em>מצלמה</em>
+        <input type="file" accept="image/*" capture="environment" id="photoIn" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;font-size:32px">
+      </label>
     </div>
-    <input type="file" accept="image/*" capture="environment" id="photoIn" style="display:none">
     <div id="filesMount">${filesBlockHtml([],{loading:true})}</div>
     ${job==="m"?`<button class="btn" data-done="${r.id}" style="margin-top:14px;width:100%">סיים מדידה</button>`:`<button class="btn" data-instdone="${r.id}" style="margin-top:14px;width:100%">סיים התקנה</button>`}
     </div>`;
@@ -1875,21 +1877,14 @@ function openCardRO(r, kind){
     })();
   };
   document.getElementById("aNav").onclick=()=>{ if(!r.address) return toast("אין כתובת"); location.href=["https:","","waze.com/ul?q="+encodeURIComponent(r.address)].join("/"); };
-  document.getElementById("aCam").onclick=()=>{
-    const x=document.createElement("input");
-    x.type="file";
-    x.accept="image/*";
-    x.setAttribute("capture","environment");
-    x.style.display="none";
-    x.onchange=async()=>{
-      const files=[...x.files];
-      x.remove();
-      if(!files.length) return;
-      try{ await enqueueUploads(r, files); }
-      catch(e){ toast("לא נכנס לתור"); }
-    };
-    document.body.appendChild(x);
-    x.click();
+  const inp=document.getElementById("photoIn");
+  if(inp) inp.onchange=async()=>{
+    const files=[...inp.files];
+    inp.value="";
+    if(!files.length) return;
+    toast("מעלה צילום…");
+    try{ await enqueueUploads(r, files); }
+    catch(e){ toast("העלאה נכשלה: "+(e&&e.message||e)); }
   };
   loadFiles(r).then(files=>{
     const box=document.getElementById("filesMount");
@@ -2766,7 +2761,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1663`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1664`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
