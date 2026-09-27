@@ -803,11 +803,33 @@ function openLightbox(files, i){
   };
   const fillMedia=(sl,f)=>{
     sl.innerHTML="";
+    const openOrig=async ev=>{
+      if(ev) ev.stopPropagation();
+      toast("מוריד מקור…");
+      try{
+        if(f&&f.id){
+          const d=await runGS("apiGetFile",{fileId:f.id},60000);
+          if(d&&d.ok&&d.data){
+            const file=b64ToFile(d.data,d.name||f.name,d.mime|| (isPdfFile(f)?"application/pdf":"image/jpeg"));
+            const url=URL.createObjectURL(file);
+            const a=document.createElement("a");
+            a.href=url; a.target="_blank"; a.rel="noopener"; a.download=file.name||"file";
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(()=>URL.revokeObjectURL(url),8000);
+            return;
+          }
+        }
+      }catch(e){}
+      const href=f.view||f.url||drivePreview(f);
+      if(href) window.open(href,"_blank");
+    };
     const showImg=src=>{
       sl.innerHTML="";
       const img=document.createElement("img");
       img.alt="";
       img.src=src;
+      img.style.cursor="zoom-in";
+      img.onclick=openOrig;
       sl.appendChild(img);
     };
     if(f.thumb&&String(f.thumb).indexOf("data:")===0){ showImg(f.thumb); return; }
@@ -826,6 +848,7 @@ function openLightbox(files, i){
       a.rel="noopener";
       a.href=f.view||f.url||drivePreview(f);
       a.textContent="פתח קובץ";
+      a.onclick=e=>{ e.preventDefault(); openOrig(e); };
       sl.appendChild(a);
     });
   };
@@ -1157,13 +1180,14 @@ function counts(rows){
   const tone={
     "מדידה":"background:#f7c6c6;color:#8a2a2a;border-color:#e8a0a0",
     "שרטוט":"background:#8b1c1c;color:#fff;border-color:#6a1414",
+    "ממתין לאישור":"background:#bfe3b6;color:#2a5c32;border-color:#8fc896",
     "CAM":"background:#2b4d9b;color:#fff;border-color:#1e3878",
     "ייצור":"background:#e6e6e6;color:#555;border-color:#ccc",
     "מוכן":"background:#1f6b3a;color:#fff;border-color:#145028"
   };
   const pick=k=>state.filterStatus===k?"box-shadow:inset 0 0 0 2px currentColor":"";
   return `<div class="kpi ${!state.filterStatus?"on":""}" data-st="all" style="background:#fff;color:var(--ink)"><span>כל הפעילים</span><b>${vis.length}</b></div>`+
-    ["מדידה","שרטוט","CAM","ייצור","מוכן"].map(s=>`<div class="kpi" data-st="${s}" style="${tone[s]};${pick(s)}"><span>${s}</span><b>${map[s]||0}</b></div>`).join("")+
+    ["מדידה","שרטוט","ממתין לאישור","CAM","ייצור","מוכן"].map(s=>`<div class="kpi" data-st="${s}" style="${tone[s]};${pick(s)}"><span>${s==="ממתין לאישור"?"ממתין לאישור":s}</span><b>${map[s]||0}</b></div>`).join("")+
     `<div class="kpi" data-st="debt" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;${pick("debt")}"><span>חייבים</span><b>${debtRows(state.rows).length}</b></div>`;
 }
 
@@ -1833,7 +1857,7 @@ function openCardRO(r, kind){
       ${r.folderUrl?`<a class="act" href="${r.folderUrl}" target="_blank">${svgFold()}<em>תיקייה</em></a>`:`<button class="act" type="button">${svgFold()}<em>תיקייה</em></button>`}
       <button class="act" type="button" id="aCam">${svgCam()}<em>מצלמה</em></button>
     </div>
-    <input type="file" accept="image/*,video/*" capture="environment" id="photoIn" style="display:none" multiple>
+    <input type="file" accept="image/*" capture="environment" id="photoIn" style="display:none">
     <div id="filesMount">${filesBlockHtml([],{loading:true})}</div>
     ${job==="m"?`<button class="btn" data-done="${r.id}" style="margin-top:14px;width:100%">סיים מדידה</button>`:`<button class="btn" data-instdone="${r.id}" style="margin-top:14px;width:100%">סיים התקנה</button>`}
     </div>`;
@@ -1847,14 +1871,21 @@ function openCardRO(r, kind){
     })();
   };
   document.getElementById("aNav").onclick=()=>{ if(!r.address) return toast("אין כתובת"); location.href=["https:","","waze.com/ul?q="+encodeURIComponent(r.address)].join("/"); };
-  const inp=document.getElementById("photoIn");
-  document.getElementById("aCam").onclick=()=>inp.click();
-  inp.onchange=async()=>{
-    const files=[...inp.files];
-    inp.value="";
-    if(!files.length) return;
-    try{ await enqueueUploads(r, files); }
-    catch(e){ toast("לא נכנס לתור"); }
+  document.getElementById("aCam").onclick=()=>{
+    const x=document.createElement("input");
+    x.type="file";
+    x.accept="image/*";
+    x.setAttribute("capture","environment");
+    x.style.display="none";
+    x.onchange=async()=>{
+      const files=[...x.files];
+      x.remove();
+      if(!files.length) return;
+      try{ await enqueueUploads(r, files); }
+      catch(e){ toast("לא נכנס לתור"); }
+    };
+    document.body.appendChild(x);
+    x.click();
   };
   loadFiles(r).then(files=>{
     const box=document.getElementById("filesMount");
@@ -1960,15 +1991,36 @@ function openCard(id){
     </div>
     </div>
     </div>`;
-  document.getElementById("closeCard").onclick=()=>document.getElementById("ov").classList.remove("show");
+  const snap=JSON.stringify({
+    phone:r.phone,phone2:r.phone2,contact:r.contact,address:r.address,floor:r.floor,apt:r.apt,
+    status:r.status,pay:r.pay,notes:r.notes,measure:r.measure,install:r.install,pending:0
+  });
+  function formSnap(){
+    const g=id=>{const el=document.getElementById(id); return el?el.value.trim():"";};
+    return JSON.stringify({
+      phone:g("f_phone"),phone2:g("f_phone2"),contact:g("f_contact"),address:g("f_address"),
+      floor:g("f_floor"),apt:g("f_apt"),status:g("f_status"),
+      pay:g("f_pay")==="—"?"":g("f_pay"),notes:g("f_notes"),
+      measure:r.measure,install:r.install,pending:(r.pendingCal||[]).length
+    });
+  }
+  document.getElementById("closeCard").onclick=async()=>{
+    if(formSnap()!==snap){
+      const ok=await ask("הנתונים לא נשמרו. לצאת?","לצאת","להישאר");
+      if(!ok) return;
+    }
+    document.getElementById("ov").classList.remove("show");
+  };
   document.getElementById("saveCard").onclick=async()=>{
     r.phone=val("f_phone"); r.contact=val("f_contact"); r.phone2=val("f_phone2");
     r.address=val("f_address"); r.floor=val("f_floor"); r.apt=val("f_apt");
     r.status=val("f_status"); r.pay=val("f_pay")==="—"?"":val("f_pay"); r.notes=val("f_notes");
     r.updated=fmtDT(new Date());
+    toast("שומר ליומן…");
+    await flushPendingCal(r);
     await saveLocal();
     document.getElementById("ov").classList.remove("show");
-    render(); toast("נשמר במסד המקומי");
+    render(); toast("נשמר");
   };
   const colorStatus=()=>{
     const el=document.getElementById("f_status"); if(!el) return;
@@ -2101,6 +2153,33 @@ function hoursList(){
   for(let h=8;h<=18;h++) a.push(String(h).padStart(2,"0")+":00");
   return a;
 }
+function dayPart(start){
+  const s=String(start||"");
+  let x=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(x) return {d:+x[1], m:+x[2]-1, y:+x[3]};
+  x=s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(x) return {y:+x[1], m:+x[2]-1, d:+x[3]};
+  return null;
+}
+function markPickBusy(y, m){
+  const box=document.getElementById("pDays");
+  if(!box) return;
+  const busy={};
+  calEvents().forEach(e=>{
+    const p=dayPart(e.start);
+    if(!p||p.y!==y||p.m!==m) return;
+    const slot=busy[p.d]||(busy[p.d]={n:0,m:0,i:0});
+    slot.n++;
+    if(e.kind==="i") slot.i++; else slot.m++;
+  });
+  box.querySelectorAll("[data-d]").forEach(b=>{
+    const slot=busy[+b.dataset.d];
+    if(!slot) return;
+    b.style.background=slot.i&&!slot.m?"#ffd0a8":(slot.m&&!slot.i?"#c6f5d6":"#ffe9a8");
+    b.title=slot.n+" אירועים";
+    b.innerHTML=b.dataset.d+"<small style='display:block;font-size:9px;opacity:.8'>"+slot.n+"</small>";
+  });
+}
 function openPick(r, kind, isNew){
   const now=new Date();
   let y=now.getFullYear(), m=now.getMonth();
@@ -2110,7 +2189,7 @@ function openPick(r, kind, isNew){
     const wd=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"].map(w=>`<div class="cal-wd">${w}</div>`).join("");
     let days="";
     for(let i=0;i<first;i++) days+=`<div></div>`;
-    for(let d=1;d<=dim;d++) days+=`<button class="chip" type="button" data-d="${d}" style="margin:0;padding:8px 0;width:100%;text-align:center">${d}</button>`;
+    for(let d=1;d<=dim;d++) days+=`<button class="chip" type="button" data-d="${d}" style="margin:0;padding:8px 0;width:100%;text-align:center;min-height:36px">${d}</button>`;
     const cells=first+dim;
     for(let i=cells;i<42;i++) days+=`<div></div>`;
     const title=new Date(y,m,1).toLocaleDateString("he-IL",{month:"long",year:"numeric"});
@@ -2132,7 +2211,7 @@ function openPick(r, kind, isNew){
       <select id="pWho">${instOptions("")}</select>
       <label>הערה ליומן</label>
       <input id="pNote" value="">
-      <p class="muted">מדידה ירוק, התקנה כתום.</p>
+      <p class="muted">האירוע יישמר ביומן רק אחרי שמירת הכרטיס. ירוק — מדידה, כתום — התקנה.</p>
       </div>`;
     let day=now.getDate(), hour="09:00";
     document.getElementById("pPrev").onclick=()=>{m--; if(m<0){m=11;y--;} paint()};
@@ -2149,6 +2228,24 @@ function openPick(r, kind, isNew){
     };
     document.getElementById("pBack").onclick=()=>isNew?openNew(r):openCard(r.id);
     document.getElementById("pOk").onclick=()=>applyPick(r,kind,y,m,day,hour,val("pNote"),isNew);
+    markPickBusy(y,m);
+    (async()=>{
+      const s=state.settings||{};
+      const calId=s.calMeasure||s.calInstall||s.calendarId||"";
+      if(!calId) return;
+      const a=new Date(y,m,1), b=new Date(y,m+1,1);
+      try{
+        const out=await runGS("apiCalList",{from:isoDay(a),to:isoDay(b),calId},20000);
+        if(out&&out.ok){
+          const hide=state.hideCal||{};
+          const extra=(out.events||[]).filter(e=>!hide[e.id]);
+          const have={};
+          (state.gcal||[]).forEach(e=>{ if(e.id) have[e.id]=1; });
+          extra.forEach(e=>{ if(!have[e.id]) (state.gcal=state.gcal||[]).push(e); });
+          markPickBusy(y,m);
+        }
+      }catch(e){}
+    })();
   };
   paint();
 }
@@ -2163,38 +2260,40 @@ async function applyPick(r,kind,y,m,day,hour,note,isNew){
   const whoEl=document.getElementById("pWho");
   const who=whoEl?whoEl.value.trim():"";
   r.updated=fmtDT(new Date());
-  const pack=Object.assign({},r,{whoMeasure:who,whoInstall:who});
-  const text=eventBody(pack, kind, note);
-  const loc=eventLocation(r);
-  try{
-    const out=await runGS("apiCalUpsert",{
-      kind:field, title:text, start:stamp, address:r.address||"",
-      note:text, name:r.name||"", phone:r.phone||"", phone2:r.phone2||"",
-      contact:r.contact||"", floor:r.floor||"", apt:r.apt||"",
-      anno:note||"", forceNew:true,
-      calId:state.settings.calMeasure||state.settings.calendarId||""
-    });
-    const eid=out&&out.eventId||"";
-    if(r[field] && r[field]!==stamp){
-      r.extraDates=r.extraDates||[];
-      r.extraDates.push({kind:field,start:r[field],eid:kind==="m"?r.measureEid:r.installEid,note:""});
-    }
-    if(r[field]===stamp){
-      r.extraDates=r.extraDates||[];
-      r.extraDates.push({kind:field,start:stamp,eid,note:""});
-    }else{
-      r[field]=stamp;
-      if(kind==="m") r.measureEid=eid; else r.installEid=eid;
-    }
-    if(kind==="m") r.whoMeasure=""; else r.whoInstall="";
-    if(!eid) toast("יומן: "+((out&&out.error)||"לא נשמר"));
-  }catch(e){
-    r[field]=stamp;
-    toast("שגיאת יומן: "+(e&&e.message||e));
+  if(r[field] && r[field]!==stamp){
+    r.extraDates=r.extraDates||[];
+    r.extraDates.push({kind:field,start:r[field],eid:kind==="m"?r.measureEid:r.installEid,note:""});
   }
-  if(!isNew) await saveLocal();
+  r[field]=stamp;
+  if(kind==="m") r.whoMeasure=who; else r.whoInstall=who;
+  r.pendingCal=r.pendingCal||[];
+  r.pendingCal.push({kind:field,start:stamp,who,note:note||""});
   if(isNew) openNew(r); else openCard(r.id);
-  toast((kind==="m"?"מדידה ":"התקנה ")+stamp);
+  toast((kind==="m"?"מדידה ":"התקנה ")+stamp+" · יישמר ביומן אחרי שמירת הכרטיס");
+}
+async function flushPendingCal(r){
+  const list=r.pendingCal||[];
+  r.pendingCal=[];
+  for(const p of list){
+    const kind=p.kind==="install"||p.kind==="i"?"i":"m";
+    const field=kind==="m"?"measure":"install";
+    const pack=Object.assign({},r,{whoMeasure:p.who||r.whoMeasure,whoInstall:p.who||r.whoInstall});
+    const text=eventBody(pack, kind, p.note||"");
+    try{
+      const out=await runGS("apiCalUpsert",{
+        kind:field, title:text, start:p.start, address:r.address||"",
+        note:text, name:r.name||"", phone:r.phone||"", phone2:r.phone2||"",
+        contact:r.contact||"", floor:r.floor||"", apt:r.apt||"",
+        anno:p.note||"", forceNew:true,
+        calId:state.settings.calMeasure||state.settings.calendarId||""
+      });
+      const eid=out&&out.eventId||"";
+      if(kind==="m") r.measureEid=eid||r.measureEid; else r.installEid=eid||r.installEid;
+      if(!eid) toast("יומן: "+((out&&out.error)||"לא נשמר"));
+    }catch(e){
+      toast("שגיאת יומן: "+(e&&e.message||e));
+    }
+  }
 }
 function val(id){return document.getElementById(id).value.trim()}
 function fileToB64(file){
@@ -2427,6 +2526,7 @@ function openNew(draft){
       const out=await runGS("apiCreateClientFolder",{name:r.name, parent:state.settings.folderActive||state.settings.folderClients||""});
       if(out&&out.ok&&out.folderUrl) r.folderUrl=out.folderUrl;
     }catch(e){}
+    await flushPendingCal(r);
     state.rows.unshift(r); await saveLocal();
     document.getElementById("ov").classList.remove("show"); render();
     if(r.folderUrl){ toast("נוצר · תיקייה נפתחת"); window.open(r.folderUrl,"_blank"); }
@@ -2601,7 +2701,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1661`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1662`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
