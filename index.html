@@ -1551,8 +1551,10 @@ function openEventEdit(ds){
   const fitTa=()=>{ta.style.height="auto"; ta.style.height=Math.max(120,ta.scrollHeight)+"px";};
   fitTa(); ta.addEventListener("input",fitTa);
   document.getElementById("closeCard").onclick=()=>{
+    const pick=state._backPick; state._backPick=null;
     const back=state._backCard; state._backCard="";
-    if(back) openCard(back);
+    if(pick&&pick.r) openPick(pick.r, pick.kind, pick.isNew);
+    else if(back) openCard(back);
     else document.getElementById("ov").classList.remove("show");
   };
   document.getElementById("evDel").onclick=()=>askDeleteCal({calid:p.id,calkind:p.kind,calstart:p.start,calg:p.g?"1":"",calname:p.name});
@@ -1581,9 +1583,11 @@ function openEventEdit(ds){
       await saveLocal();
     }
     state._gcalKey="";
+    const pick=state._backPick; state._backPick=null;
     const back=state._backCard; state._backCard="";
     toast("נשמר");
-    if(back) openCard(back);
+    if(pick&&pick.r) openPick(pick.r, pick.kind, pick.isNew);
+    else if(back) openCard(back);
     else { document.getElementById("ov").classList.remove("show"); render(); }
   };
 }
@@ -2187,11 +2191,18 @@ function openPick(r, kind, isNew){
     const dim=new Date(y,m+1,0).getDate();
     const first=new Date(y,m,1).getDay();
     const wd=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"].map(w=>`<div class="cal-wd">${w}</div>`).join("");
+    const ev=calEvents();
+    const evTime=e=>{ const t=String(e.start||"").match(/(\d{1,2}:\d{2})/); return t?t[1]:""; };
     let days="";
-    for(let i=0;i<first;i++) days+=`<div></div>`;
-    for(let d=1;d<=dim;d++) days+=`<button class="chip" type="button" data-d="${d}" style="margin:0;padding:8px 0;width:100%;text-align:center;min-height:36px">${d}</button>`;
-    const cells=first+dim;
-    for(let i=cells;i<42;i++) days+=`<div></div>`;
+    for(let i=0;i<first;i++) days+=`<div class="cal-cell"></div>`;
+    for(let d=1;d<=dim;d++){
+      const key=fmtDay(new Date(y,m,d));
+      const here=ev.filter(e=>fmtDay(e.start)===key);
+      days+=`<div class="cal-cell" data-d="${d}" style="min-height:72px;text-align:right;padding:4px;overflow:auto">
+        <b style="display:block">${d}</b>
+        ${here.map(e=>`<div class="cal-ev ${e.kind||""}" data-calid="${esc(e.id||"")}" data-calkind="${e.kind||""}" data-calstart="${esc(e.start||"")}" data-calg="${e.g?"1":""}" data-calname="${esc(e.name||"")}" data-calnote="${esc(e.note||"")}">${esc((evTime(e)?evTime(e)+" ":"")+(e.name||""))}</div>`).join("")}
+      </div>`;
+    }
     const title=new Date(y,m,1).toLocaleDateString("he-IL",{month:"long",year:"numeric"});
     const hours=hoursList().map(h=>`<button class="chip" type="button" data-h="${h}">${h}</button>`).join("");
     document.getElementById("md").innerHTML=`<div class="card-head">
@@ -2204,7 +2215,7 @@ function openPick(r, kind, isNew){
       <div class="card-body" style="padding:14px 16px 32px">
       <div class="toolbar"><span class="chip" id="pPrev">‹</span><b>${esc(title)}</b><span class="chip" id="pNext">›</span></div>
       <div class="cal-wd-row" style="margin-top:6px">${wd}</div>
-      <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:4px 0" id="pDays">${days}</div>
+      <div class="cal-grid cal-month" style="margin:4px 0" id="pDays">${days}</div>
       <label>שעה</label>
       <div id="pHours" style="display:flex;flex-wrap:wrap;gap:6px">${hours}</div>
       <label>מתקין</label>
@@ -2217,9 +2228,24 @@ function openPick(r, kind, isNew){
     document.getElementById("pPrev").onclick=()=>{m--; if(m<0){m=11;y--;} paint()};
     document.getElementById("pNext").onclick=()=>{m++; if(m>11){m=0;y++;} paint()};
     document.getElementById("pDays").onclick=e=>{
+      const evEl=e.target.closest("[data-calstart]");
+      if(evEl){
+        e.stopPropagation();
+        state._backPick={r,kind,isNew,y,m};
+        openEventEdit({
+          calid:evEl.dataset.calid||"",
+          calkind:evEl.dataset.calkind||kind,
+          calstart:evEl.dataset.calstart||"",
+          calg:evEl.dataset.calg||"",
+          calname:evEl.dataset.calname||"",
+          calnote:evEl.dataset.calnote||""
+        });
+        return;
+      }
       const b=e.target.closest("[data-d]"); if(!b) return;
       day=+b.dataset.d;
-      document.querySelectorAll("#pDays .chip").forEach(x=>x.classList.toggle("on",x===b));
+      document.querySelectorAll("#pDays .cal-cell").forEach(x=>x.style.outline="");
+      b.style.outline="2px solid var(--green)";
     };
     document.getElementById("pHours").onclick=e=>{
       const b=e.target.closest("[data-h]"); if(!b) return;
@@ -2337,46 +2363,78 @@ function qDel(id){
 }
 let qBusy=false;
 async function shrinkPic(file){
-  if(!file||!String(file.type||"").startsWith("image/")||file.size<900000) return file;
+  if(!file||file.size<200000) return file;
+  if(!String(file.type||"").startsWith("image/") && !/\.(jpe?g|png|heic|heif|webp)$/i.test(file.name||"")) return file;
   try{
     const url=URL.createObjectURL(file);
     const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url;});
-    const max=1600;
+    const max=1280;
     let w=img.width,h=img.height;
     if(w>max||h>max){ const s=max/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
     const c=document.createElement("canvas"); c.width=w; c.height=h;
     c.getContext("2d").drawImage(img,0,0,w,h);
     URL.revokeObjectURL(url);
-    const blob=await new Promise(res=>c.toBlob(res,"image/jpeg",0.82));
+    const blob=await new Promise(res=>c.toBlob(res,"image/jpeg",0.72));
     if(!blob) return file;
     return new File([blob], (file.name||"photo").replace(/\.[^.]+$/,"")+".jpg", {type:"image/jpeg"});
   }catch(e){ return file; }
 }
+async function ensureClientFolder(r){
+  if(r.folderUrl) return r.folderUrl;
+  if(!r.name) throw new Error("name");
+  const out=await runGS("apiCreateClientFolder",{name:r.name, parent:state.settings.folderActive||state.settings.folderClients||""});
+  if(out&&out.ok&&out.folderUrl) r.folderUrl=out.folderUrl;
+  if(!r.folderUrl) throw new Error("folder");
+  return r.folderUrl;
+}
+async function uploadDirect(r, raw){
+  await ensureClientFolder(r);
+  const f=await shrinkPic(raw);
+  const data=await fileToB64(f);
+  if(!data) throw new Error("empty");
+  const up=await runGS("apiUploadFile",{
+    folderUrl:r.folderUrl,
+    name:f.name||("photo-"+Date.now()+".jpg"),
+    mime:f.type||"image/jpeg",
+    data
+  },90000);
+  if(!up||!up.ok) throw new Error((up&&up.error)||"upload");
+  return up;
+}
 async function enqueueUploads(r, files){
   if(!files||!files.length) return;
-  if(!r.folderUrl){
-    if(!r.name) throw new Error("name");
-    try{
-      const out=await runGS("apiCreateClientFolder",{name:r.name, parent:state.settings.folderActive||state.settings.folderClients||""});
-      if(out&&out.ok) r.folderUrl=out.folderUrl;
-    }catch(e){}
-  }
-  if(!r.folderUrl) throw new Error("folder");
-  let n=0;
+  toast("מעלה "+files.length+"…");
+  let ok=0, fail=0;
   for(const raw of files){
-    const f=await shrinkPic(raw);
-    await qPut({
-      id:Date.now()+"-"+Math.random().toString(36).slice(2,8),
-      clientId:r.id||"",
-      folderUrl:r.folderUrl,
-      name:f.name||("photo-"+Date.now()+".jpg"),
-      mime:f.type||"image/jpeg",
-      blob:f
-    });
-    n++;
+    try{
+      await uploadDirect(r, raw);
+      ok++;
+    }catch(e){
+      fail++;
+      try{
+        const f=await shrinkPic(raw);
+        await qPut({
+          id:Date.now()+"-"+Math.random().toString(36).slice(2,8),
+          clientId:r.id||"",
+          folderUrl:r.folderUrl,
+          name:f.name||("photo-"+Date.now()+".jpg"),
+          mime:f.type||"image/jpeg",
+          blob:f,
+          tries:0
+        });
+      }catch(e2){}
+    }
   }
-  toast("בתור העלאה: "+n);
-  pumpQueue();
+  if(ok) toast(ok===files.length?"הועלה":("הועלה "+ok+" · ממתינים "+fail));
+  else toast("לא הועלה · בודק שוב");
+  const box=document.getElementById("filesMount");
+  if(box&&ok){
+    const list=await loadFiles(r);
+    box.innerHTML=filesBlockHtml(list,{inst:!!document.querySelector(".acts")});
+    bindFileBox(r, list);
+    fillThumbs(list);
+  }
+  if(fail) pumpQueue();
 }
 async function pumpQueue(){
   if(qBusy) return;
@@ -2407,8 +2465,15 @@ async function pumpQueue(){
           fillThumbs(files);
         }
       }catch(e){
-        toast("ניסיון חוזר · "+(all.length));
-        await new Promise(ok=>setTimeout(ok,5000));
+        item.tries=(item.tries||0)+1;
+        if(item.tries>=3){
+          await qDel(item.id);
+          toast("העלאה נכשלה: "+(e&&e.message||""));
+          continue;
+        }
+        await qPut(item);
+        toast("ניסיון חוזר · "+item.tries);
+        await new Promise(ok=>setTimeout(ok,4000));
         if(typeof navigator!=="undefined" && navigator.onLine===false) break;
       }
     }
@@ -2701,7 +2766,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1662`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1663`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
