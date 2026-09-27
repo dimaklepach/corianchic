@@ -466,6 +466,7 @@ async function loadDrive(){
     rows:state.rows, agents:state.agents, installers:state.installers, production:state.production,
     settings:state.settings, history:state.history, roles:state.roles, hideCal:state.hideCal||{}, imported:true, at:Date.now()
   });
+  state.dbStamp=Number(d.stamp||Date.parse(d.updated||"")||Date.now());
   toast("Drive · "+state.rows.length+" לקוחות");
 }
 async function saveDrive(){
@@ -475,6 +476,10 @@ async function saveDrive(){
   };
   try{
     await runGS("apiDbSave", pack);
+    try{
+      const m=await runGS("apiDbMeta",{},8000);
+      if(m&&m.stamp) state.dbStamp=Number(m.stamp);
+    }catch(e2){ state.dbStamp=Date.now(); }
     return;
   }catch(e){}
   try{
@@ -487,6 +492,7 @@ async function saveLocal(){
     settings:state.settings, history:state.history, roles:state.roles, hideCal:state.hideCal||{}, imported:true, at:Date.now()
   });
   saveDrive();
+  state.dbStamp=Date.now();
 }
 async function loadLocal(){
   const pack=await idbGet("pack");
@@ -2595,7 +2601,7 @@ function render(){
   if(tk) tk.innerHTML=(state.role==="office"||state.role==="prod")?counts(state.rows):"";
   const n=state.rows.length;
   const vis=visible(state.rows).length;
-  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1660`;
+  document.getElementById("sub").textContent = `Drive · ${n} · ${state.role==="office"?"משרד":state.role==="installer"?("מתקין"+(state.worker?" · "+state.worker:"")):"ייצור"} · 1661`;
   if(state.view==="debt"){ state.view="board"; state.filterStatus=state.filterStatus||"debt"; }
   const allowed=viewsForRole().map(v=>v[0]);
   if(allowed.indexOf(state.view)<0) state.view=allowed[0]||"board";
@@ -2646,6 +2652,30 @@ document.addEventListener("keydown",e=>{
   if(i>=0&&i<list.length-1) list[i+1].focus();
 });
 
+let pollBusy=false;
+async function pullRemote(){
+  if(pollBusy||!state.role) return;
+  pollBusy=true;
+  try{
+    const meta=await runGS("apiDbMeta",{},8000);
+    const stamp=Number(meta&&meta.stamp||0);
+    if(!stamp||stamp===state.dbStamp) return;
+    if(stamp<state.dbStamp) { state.dbStamp=stamp; return; }
+    const cardOpen=document.getElementById("ov")&&document.getElementById("ov").classList.contains("show");
+    const d=await runGS("apiDbGet",{},25000);
+    if(!d||(!d.ok&&!(d.rows||[]).length)) return;
+    applyPack(d);
+    state.dbStamp=stamp;
+    await idbSet("pack",{
+      rows:state.rows, agents:state.agents, installers:state.installers, production:state.production,
+      settings:state.settings, history:state.history, roles:state.roles, hideCal:state.hideCal||{}, imported:true, at:Date.now()
+    });
+    if(!cardOpen) render();
+  }catch(e){}
+  finally{ pollBusy=false; }
+}
+setInterval(pullRemote,10000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") pullRemote(); });
 render();
 (async()=>{
   try{
